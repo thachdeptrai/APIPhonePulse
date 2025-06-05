@@ -1,0 +1,1 @@
+//  (Optional) Kiểu dữ liệu nếu dùng TypeScript hoặc mô tả data
