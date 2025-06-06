@@ -13,6 +13,11 @@ const cartItemSchema = new mongoose.Schema({
         required: true,
         description: 'ID của sản phẩm trong giỏ hàng, khóa ngoại tới products',
     },
+    variantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Variant',
+        required: true,
+    },
     quantity: {
         type: Number,
         required: true,
@@ -31,18 +36,18 @@ const cartItemSchema = new mongoose.Schema({
  */
 const cartSchema = new mongoose.Schema(
     {
-        _id: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            auto: true,
-            description: 'ID của giỏ hàng, khóa chính',
-        },
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true,
             unique: true,
             description: 'ID của người dùng sở hữu giỏ hàng, khóa ngoại tới users',
+        },
+         variantId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Variant',  
+            required: true,
+            description: 'ID của biến thể sản phẩm (vd: màu, dung lượng, phiên bản)',
         },
         items: {
             type: [cartItemSchema],

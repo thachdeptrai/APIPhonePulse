@@ -3,7 +3,7 @@ const router = express.Router();
 const auth = require('../middlewares/auth.middleware');
 const { validateMiddleware, validationSchemas } = require('../middlewares/validate.middleware');
 const cartController = require('../controllers/cart.controller');
-
+// const { authMiddleware, adminMiddleware } = require('../middlewares/auth.middleware');
 // Validation schemas
 const addToCartSchema = validationSchemas.addToCart;
 const updateCartItemSchema = validationSchemas.updateCartItem;
@@ -13,7 +13,7 @@ const removeFromCartSchema = validationSchemas.removeFromCart;
  * Áp dụng middleware xác thực cho tất cả các route
  * @middleware auth
  */
-router.use(auth);
+// router.use(authMiddleware);
 
 /**
  * @route   GET /api/cart

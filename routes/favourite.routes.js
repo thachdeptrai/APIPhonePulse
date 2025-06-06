@@ -1,17 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middlewares/auth.middleware');
-const { validateMiddleware, validationSchemas } = require('../middlewares/validate.middleware');
 const favController = require('../controllers/favourite.controller');
-
-// Validation schemas
-const favouriteSchema = validationSchemas.favourite;
-
+const { validateMiddleware, validationSchemas } = require('../middlewares/validate.middleware');
+// const { authMiddleware, adminMiddleware } = require('../middlewares/auth.middleware');
+const addfavouriteSchema = validationSchemas.addFavourite;
+const delletefavouriteSchema = validationSchemas.removeFromFavourite;
 /**
  * Áp dụng middleware xác thực cho tất cả các route
  * @middleware auth
  */
-router.use(auth);
+// router.use(authMiddleware);
 
 /**
  * @route   GET /api/favourites
@@ -25,13 +24,13 @@ router.get('/', favController.getFavourites);
  * @desc    Thêm sản phẩm vào danh sách yêu thích
  * @access  Private
  */
-router.post('/', validateMiddleware(favouriteSchema), favController.addFavourite);
+router.post('/', validateMiddleware(addfavouriteSchema), favController.addFavourite);
 
 /**
  * @route   DELETE /api/favourites
  * @desc    Xóa sản phẩm khỏi danh sách yêu thích
  * @access  Private
  */
-router.delete('/', validateMiddleware(favouriteSchema), favController.removeFavourite);
+router.delete('/', validateMiddleware(delletefavouriteSchema), favController.removeFavourite);
 
 module.exports = router;

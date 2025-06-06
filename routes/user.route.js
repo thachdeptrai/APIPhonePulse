@@ -35,7 +35,7 @@ router.post('/login',
 
 // ================== PROTECTED ROUTES ==================
 // Tất cả routes bên dưới đều cần authentication
-router.use(authMiddleware);
+// router.use(authMiddleware);
 
 /**
  * @route   GET /api/users/profile

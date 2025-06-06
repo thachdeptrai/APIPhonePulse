@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 /**
  * Mô tả schema cho collection Favourite
  * @typedef {Object} Favourite
@@ -10,12 +9,6 @@ const mongoose = require('mongoose');
  */
 const favouriteSchema = new mongoose.Schema(
     {
-        _id: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            auto: true,
-            description: 'ID của mục yêu thích, khóa chính',
-        },
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
