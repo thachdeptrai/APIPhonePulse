@@ -2,7 +2,6 @@
   "name": "apiphonepluse",
   "version": "1.0.0",
   "main": "app.js",
-  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
@@ -19,5 +18,8 @@
     "url": "https://github.com/thachdeptrai/APIPhonePulse/issues"
   },
   "homepage": "https://github.com/thachdeptrai/APIPhonePulse#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "mongoose": "^8.15.1"
+  }
 }
