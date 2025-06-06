@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
  * Mô tả schema cho item trong giỏ hàng
  * @typedef {Object} CartItem
  * @property {mongoose.Schema.Types.ObjectId} productId - ID của sản phẩm, khóa ngoại tới products
+ * @property {mongoose.Schema.Types.ObjectId} variantId - ID của biến thể sản phẩm, khóa ngoại tới ProductVariant
  * @property {Number} quantity - Số lượng sản phẩm
  */
 const cartItemSchema = new mongoose.Schema({
@@ -12,6 +13,12 @@ const cartItemSchema = new mongoose.Schema({
         ref: 'Product',
         required: true,
         description: 'ID của sản phẩm trong giỏ hàng, khóa ngoại tới products',
+    },
+    variantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ProductVariant',
+        required: true,
+        description: 'ID của biến thể sản phẩm trong giỏ hàng, khóa ngoại tới ProductVariant',
     },
     quantity: {
         type: Number,

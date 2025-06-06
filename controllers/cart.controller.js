@@ -8,7 +8,7 @@ class CartController {
      */
     static async getCart(req, res) {
         try {
-            const cart = await Cart.findOne({ userId: req.user.id }).populate('items.productId');
+            const cart = await Cart.findOne({ userId: req.user.id }).populate('items.productId items.variantId');
             res.status(200).json({
                 success: true,
                 message: 'Lấy thông tin giỏ hàng thành công',
@@ -28,16 +28,18 @@ class CartController {
      * @access  Private
      */
     static async addToCart(req, res) {
-        const { productId, quantity } = req.body;
+        const { productId, variantId, quantity } = req.body;
         try {
             let cart = await Cart.findOne({ userId: req.user.id });
             if (!cart) cart = new Cart({ userId: req.user.id, items: [] });
 
-            const existingItem = cart.items.find((item) => item.productId.toString() === productId);
+            const existingItem = cart.items.find(
+                (item) => item.productId.toString() === productId && item.variantId.toString() === variantId
+            );
             if (existingItem) {
                 existingItem.quantity += quantity || 1;
             } else {
-                cart.items.push({ productId, quantity: quantity || 1 });
+                cart.items.push({ productId, variantId, quantity: quantity || 1 });
             }
             await cart.save();
             res.status(200).json({
@@ -59,7 +61,7 @@ class CartController {
      * @access  Private
      */
     static async updateCartItem(req, res) {
-        const { productId, quantity } = req.body;
+        const { productId, variantId, quantity } = req.body;
         try {
             const cart = await Cart.findOne({ userId: req.user.id });
             if (!cart) {
@@ -69,7 +71,9 @@ class CartController {
                 });
             }
 
-            const item = cart.items.find((item) => item.productId.toString() === productId);
+            const item = cart.items.find(
+                (item) => item.productId.toString() === productId && item.variantId.toString() === variantId
+            );
             if (!item) {
                 return res.status(404).json({
                     success: false,
@@ -97,11 +101,11 @@ class CartController {
      * @access  Private
      */
     static async removeFromCart(req, res) {
-        const { productId } = req.body;
+        const { productId, variantId } = req.body;
         try {
             const cart = await Cart.findOneAndUpdate(
                 { userId: req.user.id },
-                { $pull: { items: { productId } } },
+                { $pull: { items: { productId, variantId } } },
                 { new: true }
             );
             if (!cart) {
