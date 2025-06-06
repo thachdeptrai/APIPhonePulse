@@ -1,83 +1,61 @@
-const Product = require('../models/Product');
+const Product = require('../models/Product'); 
+const ProductImage = require('../models/ProductImage');   // Import model ProductImage (chứa ảnh sản phẩm)
 
-// Lấy tất cả sản phẩm
+//  Lấy tất cả sản phẩm
 exports.getAll = async (req, res) => {
   try {
-    const products = await Product.find().populate('id_cat');
-    res.json(products);
+    // Tìm tất cả sản phẩm, đồng thời populate trường 'category_id' để lấy thông tin danh mục
+    const products = await Product.find().populate('category_id');
+    res.json(products); // Trả về danh sách sản phẩm
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message }); // Trả về lỗi nếu có sự cố
   }
 };
 
-// Lấy sản phẩm theo ID
+//  Lấy sản phẩm theo ID
 exports.getById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate('id_cat');
-    if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
-    res.json(product);
+    // Tìm sản phẩm theo ID, kèm populate danh mục
+    const product = await Product.findById(req.params.id).populate('category_id');
+    if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' }); // Nếu không tồn tại
+    res.json(product); // Trả về sản phẩm tìm được
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message }); // Trả về lỗi nếu có sự cố
   }
 };
 
-// Tạo sản phẩm mới
+//  Tạo sản phẩm mới
 exports.add = async (req, res) => {
   try {
-    const newProduct = new Product(req.body);
-    const saved = await newProduct.save();
-    res.status(201).json(saved);
+    const newProduct = new Product(req.body); // Tạo instance mới từ dữ liệu client gửi lên
+    const saved = await newProduct.save(); // Lưu vào database
+    res.status(201).json(saved); // Trả về sản phẩm mới với mã 201 (created)
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message }); // Trả về lỗi nếu dữ liệu không hợp lệ
   }
 };
 
 // Cập nhật sản phẩm
 exports.update = async (req, res) => {
   try {
+    // Tìm và cập nhật sản phẩm theo ID với dữ liệu mới, trả về bản mới nhất
     const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
-    res.json(updated);
+    if (!updated) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' }); // Nếu không tồn tại
+    res.json(updated); // Trả về sản phẩm đã cập nhật
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message }); // Trả về lỗi nếu cập nhật không thành công
   }
 };
 
-// Xoá sản phẩm
+//  Xoá sản phẩm
 exports.delete = async (req, res) => {
   try {
+    // Xoá sản phẩm theo ID
     const deleted = await Product.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
-    res.json({ message: 'Đã xoá sản phẩm' });
+    if (!deleted) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' }); // Nếu không tồn tại
+    res.json({ message: 'Đã xoá sản phẩm' }); // Trả về thông báo xoá thành công
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message }); // Trả về lỗi nếu có sự cố
   }
 };
 
-// Upload hình ảnh (sử dụng multer)
-exports.uploadImage = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
-
-    product.image = req.file.filename; // Lưu tên file ảnh
-    await product.save();
-    res.json({ message: 'Đã upload ảnh', image: product.image });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Xoá ảnh của sản phẩm
-exports.deleteImage = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product || !product.image) return res.status(404).json({ message: 'Không có ảnh' });
-
-    product.image = null;
-    await product.save();
-    res.json({ message: 'Đã xoá ảnh' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
