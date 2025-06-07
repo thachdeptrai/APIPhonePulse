@@ -44,4 +44,3 @@ router.put('/', validateMiddleware(updateCartItemSchema), cartController.updateC
 router.delete('/', validateMiddleware(removeFromCartSchema), cartController.removeFromCart);
 
 module.exports = router;
-
