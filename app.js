@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const userRoutes = require('./routes/user.route');
-
+const adminRoutes = require('./routes/admin.routes');
 const categoryRoutes = require('./routes/category.route');
 const productRoutes = require('./routes/product.route');
 const variantRoutes = require('./routes/variant.route');
@@ -15,6 +15,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use('/api/admin', adminRoutes);
 // Route cho users
 app.use('/api/users', userRoutes);
 // Route cho cart
