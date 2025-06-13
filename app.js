@@ -10,6 +10,8 @@ const colorRoutes = require('./routes/color.route');
 const sizeRoutes = require('./routes/size.route');
 const cartRoutes = require('./routes/cart.routes');
 const favRoutes = require('./routes/favourite.routes');
+const reviewRoutes = require('./routes/review.routes');
+const voucherRoutes = require('./routes/voucher.routes');
 const app = express();
 
 app.use(cors());
@@ -39,5 +41,7 @@ app.use('/api/colors', colorRoutes);
 
 app.use('/api/sizes', sizeRoutes);
 
+app.use('/api/reviews', reviewRoutes);
 
+app.use('/api/vouchers', voucherRoutes);
 module.exports = app;
