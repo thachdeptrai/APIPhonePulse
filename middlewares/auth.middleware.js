@@ -31,9 +31,9 @@ const authMiddleware = async (req, res, next) => {
 
         // Verify token
         const decoded = UserUtils.verifyToken(token);
-        
+        req.user = decoded; 
         // Lấy thông tin user từ database
-        const user = await UserService.getUserById(decoded.id);
+        const user = await UserService.getUserById(decoded._id);
         
         if (!user) {
             return res.status(401).json({
@@ -156,7 +156,7 @@ const optionalAuthMiddleware = async (req, res, next) => {
 
         try {
             const decoded = UserUtils.verifyToken(token);
-            const user = await UserService.getUserById(decoded.id);
+            const user = await UserService.getUserById(decoded._id);
             
             if (user && UserUtils.isActiveUser(user)) {
                 req.user = user;

@@ -9,7 +9,7 @@ class VoucherController {
      */
     static async applyVoucher(req, res) {
         const { code, orderTotal } = req.body;
-        const userId = req.user.id;
+        const userId = req.user._id;
 
         try {
             const voucher = await Voucher.findOne({ code });
@@ -132,7 +132,7 @@ class VoucherController {
      */
     static async update(req, res) {
         try {
-            const voucher = await Voucher.findByIdAndUpdate(req.params.id, req.body, { new: true });
+            const voucher = await Voucher.findByIdAndUpdate(req.params._id, req.body, { new: true });
             if (!voucher) {
                 return res.status(404).json({
                     success: false,
@@ -159,7 +159,7 @@ class VoucherController {
      */
     static async remove(req, res) {
         try {
-            const voucher = await Voucher.findByIdAndDelete(req.params.id);
+            const voucher = await Voucher.findByIdAndDelete(req.params._id);
             if (!voucher) {
                 return res.status(404).json({
                     success: false,

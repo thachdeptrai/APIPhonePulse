@@ -4,7 +4,7 @@ const Variant = require('../models/Variant');
 exports.getAll = async (req, res) => {
   try {
     // Tìm tất cả các biến thể có product_id khớp với ID được truyền vào từ URL
-    const variants = await Variant.find({ product_id: req.params.id });
+    const variants = await Variant.find({ product_id: req.params._id });
     res.json(variants); // Trả về danh sách biến thể
   } catch (error) {
     // Trả về lỗi nếu có sự cố server
@@ -28,7 +28,7 @@ exports.getById = async (req, res) => {
 exports.add = async (req, res) => {
   try {
     // Tạo mới biến thể, gán thêm product_id từ URL vào body gửi lên
-    const variant = new Variant({ ...req.body, product_id: req.params.id });
+    const variant = new Variant({ ...req.body, product_id: req.params._id });
     const saved = await variant.save(); // Lưu vào MongoDB
     res.status(201).json(saved); // Trả về biến thể mới tạo
   } catch (error) {

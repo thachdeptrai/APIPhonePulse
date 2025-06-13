@@ -8,7 +8,7 @@ class FavouriteController {
      */
     static async getFavourites(req, res) {
         try {
-            const favourites = await Favourite.find({ userId: req.user.id }).populate('productId');
+            const favourites = await Favourite.find({ userId: req.user._id }).populate('productId');
             res.status(200).json({
                 success: true,
                 message: 'Lấy danh sách yêu thích thành công',
@@ -31,7 +31,7 @@ class FavouriteController {
         const { productId } = req.body;
         try {
             const existingFavourite = await Favourite.findOne({
-                userId: req.user.id,
+                userId: req.user._id,
                 productId,
             });
             if (existingFavourite) {
@@ -42,7 +42,7 @@ class FavouriteController {
             }
 
             const favourite = new Favourite({
-                userId: req.user.id,
+                userId: req.user._id,
                 productId,
                 addedAt: new Date(),
             });
@@ -69,7 +69,7 @@ class FavouriteController {
         const { productId } = req.body;
         try {
             const favourite = await Favourite.findOneAndDelete({
-                userId: req.user.id,
+                userId: req.user._id,
                 productId,
             });
             if (!favourite) {

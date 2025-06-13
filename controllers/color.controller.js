@@ -13,7 +13,7 @@ exports.getAll = async (req, res) => {
 //  Lấy màu theo ID
 exports.getById = async (req, res) => {
   try {
-    const color = await Color.findById(req.params.id); // Lấy màu theo _id từ URL
+    const color = await Color.findById(req.params._id); // Lấy màu theo _id từ URL
     if (!color) return res.status(404).json({ message: 'Không tìm thấy màu.' }); // Nếu không có thì trả về 404
     res.json(color); // Trả về màu tìm thấy
   } catch (err) {
@@ -36,7 +36,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const updated = await Color.findByIdAndUpdate(
-      req.params.id,      // ID cần cập nhật
+      req.params._id,      // ID cần cập nhật
       req.body,           // Dữ liệu mới
       { new: true }       // Trả về document mới sau khi cập nhật
     );
@@ -50,7 +50,7 @@ exports.update = async (req, res) => {
 //  Xoá màu theo ID
 exports.delete = async (req, res) => {
   try {
-    const deleted = await Color.findByIdAndDelete(req.params.id); // Tìm và xoá theo ID
+    const deleted = await Color.findByIdAndDelete(req.params._id); // Tìm và xoá theo ID
     if (!deleted) return res.status(404).json({ message: 'Không tìm thấy màu để xoá.' }); // Không tìm thấy thì trả 404
     res.json({ message: 'Đã xoá màu thành công.' }); // Trả về kết quả thành công
   } catch (err) {

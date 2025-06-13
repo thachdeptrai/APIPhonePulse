@@ -13,7 +13,7 @@ exports.getAll = async (req, res) => {
 //  Lấy một danh mục theo ID
 exports.getById = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id); // Tìm danh mục theo ID
+    const category = await Category.findById(req.params._id); // Tìm danh mục theo ID
     if (!category) {
       return res.status(404).json({ message: 'Không tìm thấy danh mục' }); // Nếu không tìm thấy, trả lỗi 404
     }
@@ -38,7 +38,7 @@ exports.add = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const updated = await Category.findByIdAndUpdate(
-      req.params.id,        // ID danh mục
+      req.params._id,        // ID danh mục
       req.body,             // Dữ liệu cập nhật
       { new: true }         // Trả về bản ghi mới sau khi update
     );
@@ -54,7 +54,7 @@ exports.update = async (req, res) => {
 //  Xoá danh mục
 exports.delete = async (req, res) => {
   try {
-    const deleted = await Category.findByIdAndDelete(req.params.id); // Tìm và xoá theo ID
+    const deleted = await Category.findByIdAndDelete(req.params._id); // Tìm và xoá theo ID
     if (!deleted) {
       return res.status(404).json({ message: 'Không tìm thấy danh mục' }); // Không có
     }

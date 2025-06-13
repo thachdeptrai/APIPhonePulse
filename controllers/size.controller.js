@@ -13,7 +13,7 @@ exports.getAll = async (req, res) => {
 // 🔍 Lấy một kích thước theo ID
 exports.getById = async (req, res) => {
   try {
-    const size = await Size.findById(req.params.id); // Tìm kích thước theo ID
+    const size = await Size.findById(req.params._id); // Tìm kích thước theo ID
     if (!size) {
       return res.status(404).json({ message: 'Không tìm thấy kích thước.' }); // Không có kích thước
     }
@@ -38,7 +38,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     // Cập nhật bản ghi theo ID với dữ liệu mới từ req.body, trả về bản ghi sau khi cập nhật
-    const updated = await Size.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updated = await Size.findByIdAndUpdate(req.params._id, req.body, { new: true });
     if (!updated) {
       return res.status(404).json({ message: 'Không tìm thấy kích thước để cập nhật.' });
     }
@@ -51,7 +51,7 @@ exports.update = async (req, res) => {
 // ❌ Xoá kích thước
 exports.delete = async (req, res) => {
   try {
-    const deleted = await Size.findByIdAndDelete(req.params.id); // Xoá bản ghi theo ID
+    const deleted = await Size.findByIdAndDelete(req.params._id); // Xoá bản ghi theo ID
     if (!deleted) {
       return res.status(404).json({ message: 'Không tìm thấy kích thước để xoá.' });
     }

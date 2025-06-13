@@ -44,12 +44,6 @@ const cartSchema = new mongoose.Schema(
             unique: true,
             description: 'ID của người dùng sở hữu giỏ hàng, khóa ngoại tới users',
         },
-         variantId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Variant',  
-            required: true,
-            description: 'ID của biến thể sản phẩm (vd: màu, dung lượng, phiên bản)',
-        },
         items: {
             type: [cartItemSchema],
             default: [],
@@ -67,4 +61,4 @@ const cartSchema = new mongoose.Schema(
     }
 );
 
-module.exports = mongoose.model('Cart', cartSchema);
+module.exports = mongoose.model('Cart', cartSchema); 

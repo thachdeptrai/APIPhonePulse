@@ -11,7 +11,7 @@ class OrderController {
       const { items, discount_amount, final_price, shipping_address, payment_method, note } = req.body;
 
       const order = await Order.create({
-        userId: req.user.id,
+        userId: req.user._id,
         items,
         discount_amount,
         final_price,
@@ -33,7 +33,7 @@ class OrderController {
    */
   static async getUserOrders(req, res) {
     try {
-      const orders = await Order.find({ userId: req.user.id }).sort({ created_date: -1 });
+      const orders = await Order.find({ userId: req.user._id }).sort({ created_date: -1 });
       res.status(200).json({ success: true, data: orders });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
@@ -47,7 +47,7 @@ class OrderController {
    */
   static async cancelOrder(req, res) {
     try {
-      const order = await Order.findOne({ _id: req.params.id, userId: req.user.id });
+      const order = await Order.findOne({ _id: req.params._id, userId: req.user._id });
       if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
 
       if (order.status !== "pending")
@@ -69,7 +69,7 @@ class OrderController {
   static async updateStatus(req, res) {
     try {
       const { status, payment_status, shipping_status, shipping_date, delivered_date } = req.body;
-      const order = await Order.findById(req.params.id);
+      const order = await Order.findById(req.params._id);
       if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
 
       if (status) order.status = status;

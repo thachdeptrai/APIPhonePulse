@@ -3,7 +3,7 @@ const ProductImage = require('../models/ProductImage');
 // Thêm ảnh sản phẩm (bằng link hoặc upload file)
 exports.addImage = async (req, res) => {
   try {
-    const productId = req.params.id; // Lấy ID sản phẩm từ URL
+    const productId = req.params._id; // Lấy ID sản phẩm từ URL
 
     // Lấy ảnh từ body (truyền link) hoặc từ file upload (upload dùng multer)
     const image_url = req.body.image_url || req.file?.filename;
@@ -31,8 +31,8 @@ exports.addImage = async (req, res) => {
 //  Lấy tất cả ảnh của một sản phẩm (theo product_id)
 exports.getImages = async (req, res) => {
   try {
-    // Tìm tất cả ảnh có product_id khớp với req.params.id
-    const images = await ProductImage.find({ product_id: req.params.id });
+    // Tìm tất cả ảnh có product_id khớp với req.params._id
+    const images = await ProductImage.find({ product_id: req.params._id });
     res.json(images); // Trả về danh sách ảnh
   } catch (err) {
     res.status(500).json({ error: err.message }); // Trả về lỗi nếu có
@@ -43,7 +43,7 @@ exports.getImages = async (req, res) => {
 exports.deleteImage = async (req, res) => {
   try {
     // Tìm ảnh theo ID trong bảng ProductImage
-    const product = await ProductImage.findById(req.params.id);
+    const product = await ProductImage.findById(req.params._id);
 
     // Nếu không tồn tại ảnh thì trả về lỗi
     if (!product || !product.image_url) {

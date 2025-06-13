@@ -39,9 +39,9 @@ class AdminController {
       });
 
       // Log hoạt động admin
-      if (req.admin && req.admin.id) {
+      if (req.admin && req.admin._id) {
         await AdminService.createLog(
-          req.admin.id,
+          req.admin._id,
           'VIEW',
           'STATS',
           `Xem thống kê doanh thu năm ${year}`
@@ -85,9 +85,9 @@ class AdminController {
       });
 
       // Log hoạt động admin
-      if (req.admin && req.admin.id) {
+      if (req.admin && req.admin._id) {
         await AdminService.createLog(
-          req.admin.id,
+          req.admin._id,
           'VIEW',
           'STATS',
           `Xem top ${limit} sản phẩm bán chạy`
@@ -242,10 +242,10 @@ class AdminController {
       });
 
       // Log hoạt động admin
-      if (req.admin && req.admin.id) {
+      if (req.admin && req.admin._id) {
         const filterDetails = `sort=${sort}, filter=${filter || 'none'}, category=${category || 'all'}`;
         await AdminService.createLog(
-          req.admin.id,
+          req.admin._id,
           'VIEW',
           'PRODUCT',
           `Xem danh sách sản phẩm với filter: ${filterDetails}`

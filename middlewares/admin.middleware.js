@@ -195,7 +195,7 @@ const rateLimitAdmin = (maxRequests = 100, windowMs = 15 * 60 * 1000) => {
 
   return (req, res, next) => {
     try {
-      const adminId = req.admin.id;
+      const adminId = req.admin._id;
       const now = Date.now();
       const windowStart = now - windowMs;
 

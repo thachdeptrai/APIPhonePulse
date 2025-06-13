@@ -32,7 +32,7 @@ class ReviewController {
         const { productId, content, images, number_of_stars } = req.body;
         try {
             const review = new Review({
-                userId: req.user.id,
+                userId: req.user._id,
                 productId,
                 content,
                 images,
@@ -63,7 +63,7 @@ class ReviewController {
         const { content, images, number_of_stars } = req.body;
         const { id } = req.params;
         try {
-            const review = await Review.findOne({ _id: id, userId: req.user.id });
+            const review = await Review.findOne({ _id: id, userId: req.user._id });
             if (!review) {
                 return res.status(404).json({
                     success: false,
@@ -96,7 +96,7 @@ class ReviewController {
     static async deleteReview(req, res) {
         const { id } = req.params;
         try {
-            const review = await Review.findOneAndDelete({ _id: id, userId: req.user.id });
+            const review = await Review.findOneAndDelete({ _id: id, userId: req.user._id });
             if (!review) {
                 return res.status(404).json({
                     success: false,

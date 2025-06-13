@@ -3,7 +3,7 @@ const router = express.Router();
 const auth = require('../middlewares/auth.middleware');
 const { validateMiddleware, validationSchemas } = require('../middlewares/validate.middleware');
 const cartController = require('../controllers/cart.controller');
-// const { authMiddleware, adminMiddleware } = require('../middlewares/auth.middleware');
+const { authMiddleware, adminMiddleware } = require('../middlewares/auth.middleware');
 // Validation schemas
 const addToCartSchema = validationSchemas.addToCart;
 const updateCartItemSchema = validationSchemas.updateCartItem;
@@ -27,7 +27,7 @@ router.get('/', cartController.getCart);
  * @desc    Thêm sản phẩm vào giỏ hàng
  * @access  Private
  */
-router.post('/', validateMiddleware(addToCartSchema), cartController.addToCart);
+router.post('/', authMiddleware,validateMiddleware(addToCartSchema), cartController.addToCart);
 
 /**
  * @route   PUT /api/cart

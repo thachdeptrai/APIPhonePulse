@@ -8,13 +8,13 @@ class CartController {
    */
   static async getCart(req, res) {
     try {
-      const cart = await Cart.findOne({ userId: req.user.id })
+      const cart = await Cart.findOne({ userId: req.user._id })
         .populate("items.productId")
         .populate("items.variantId");
       res.status(200).json({
         success: true,
         message: "Lấy thông tin giỏ hàng thành công",
-        data: cart || { userId: req.user.id, items: [] },
+        data: cart || { userId: req.user._id, items: [] },
       });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
@@ -29,8 +29,11 @@ class CartController {
   static async addToCart(req, res) {
     const { productId, variantId, quantity } = req.body;
     try {
-      let cart = await Cart.findOne({ userId: req.user.id });
-      if (!cart) cart = new Cart({ userId: req.user.id, items: [] });
+      console.log("userId: ",req.user._id);
+      console.log("productId: ",productId);
+      console.log("variantId: ",variantId);
+      let cart = await Cart.findOne({ userId: req.user._id });
+      if (!cart) cart = new Cart({ userId: req.user._id, items: [] });
 
       const existingItem = cart.items.find(
         (item) =>
@@ -63,7 +66,7 @@ class CartController {
   static async updateCartItem(req, res) {
     const { productId, variantId, quantity } = req.body;
     try {
-      const cart = await Cart.findOne({ userId: req.user.id });
+      const cart = await Cart.findOne({ userId: req.user._id });
       if (!cart)
         return res
           .status(404)
@@ -104,7 +107,7 @@ class CartController {
     const { productId, variantId } = req.body;
     try {
       const cart = await Cart.findOneAndUpdate(
-        { userId: req.user.id },
+        { userId: req.user._id },
         { $pull: { items: { productId, variantId } } },
         { new: true }
       );

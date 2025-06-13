@@ -52,7 +52,7 @@ class UserController {
    */
   static async getProfile(req, res) {
     try {
-      const userId = req.user.id; // Lấy từ middleware auth
+      const userId = req.user._id; // Lấy từ middleware auth
       const user = await UserService.getUserById(userId);
 
       res.status(200).json({
@@ -74,7 +74,7 @@ class UserController {
    */
   static async updateProfile(req, res) {
     try {
-      const userId = req.user.id; // Lấy từ middleware auth
+      const userId = req.user._id; // Lấy từ middleware auth
       const updateData = req.body;
 
       // Không cho phép user thường cập nhật role, status, is_verified
@@ -105,7 +105,7 @@ class UserController {
    */
   static async changePassword(req, res) {
     try {
-      const userId = req.user.id;
+      const userId = req.user._id;
       const { currentPassword, newPassword } = req.body;
 
       const result = await UserService.changePassword(
@@ -188,14 +188,14 @@ class UserController {
   static async getUserById(req, res) {
     try {
       // Kiểm tra quyền admin hoặc chính user đó
-      if (!UserUtils.isAdmin(req.user) && req.user.id !== req.params.id) {
+      if (!UserUtils.isAdmin(req.user) && req.user._id !== req.params._id) {
         return res.status(403).json({
           success: false,
           message: "Không có quyền truy cập",
         });
       }
 
-      const user = await UserService.getUserById(req.params.id);
+      const user = await UserService.getUserById(req.params._id);
 
       res.status(200).json({
         success: true,
@@ -224,7 +224,7 @@ class UserController {
         });
       }
 
-      const userId = req.params.id;
+      const userId = req.params._id;
       const updateData = req.body;
 
       const updatedUser = await UserService.updateUser(userId, updateData);
@@ -257,14 +257,14 @@ class UserController {
       }
 
       // Không cho phép admin tự xóa chính mình
-      if (req.user.id === req.params.id) {
+      if (req.user._id === req.params._id) {
         return res.status(400).json({
           success: false,
           message: "Không thể xóa chính mình",
         });
       }
 
-      const result = await UserService.deleteUser(req.params.id);
+      const result = await UserService.deleteUser(req.params._id);
 
       res.status(200).json({
         success: true,
@@ -292,7 +292,7 @@ class UserController {
         });
       }
 
-      const restoredUser = await UserService.restoreUser(req.params.id);
+      const restoredUser = await UserService.restoreUser(req.params._id);
 
       res.status(200).json({
         success: true,
@@ -321,7 +321,7 @@ class UserController {
         });
       }
 
-      const verifiedUser = await UserService.verifyUser(req.params.id);
+      const verifiedUser = await UserService.verifyUser(req.params._id);
 
       res.status(200).json({
         success: true,
@@ -371,7 +371,7 @@ class UserController {
    */
   static async verifySelf(req, res) {
     try {
-      const userId = req.user.id;
+      const userId = req.user._id;
       const verifiedUser = await UserService.verifyUser(userId);
 
       res.status(200).json({
@@ -393,7 +393,7 @@ class UserController {
    */
   static async deleteSelf(req, res) {
     try {
-      const userId = req.user.id;
+      const userId = req.user._id;
       const { password } = req.body;
 
       if (!password) {

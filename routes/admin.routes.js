@@ -103,9 +103,9 @@ router.get('/dashboard',
       });
 
       // Log activity
-      if (req.admin && req.admin.id) {
+      if (req.admin && req.admin._id) {
         await require('../services/admin.service').createLog(
-          req.admin.id,
+          req.admin._id,
           'VIEW',
           'STATS',
           'Xem dashboard tổng quan'

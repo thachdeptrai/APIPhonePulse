@@ -369,21 +369,29 @@ const validationSchemas = {
     },
   },
   addToCart: {
-    productId: {
+    'items.*.productId': {
       notEmpty: {
-        errorMessage: "ID sản phẩm là bắt buộc",
+        errorMessage: 'ID sản phẩm là bắt buộc',
       },
       isMongoId: {
-        errorMessage: "ID sản phẩm không hợp lệ",
+        errorMessage: 'ID sản phẩm không hợp lệ',
       },
     },
-    quantity: {
+    'items.*.variantId': {
+      notEmpty: {
+        errorMessage: 'ID biến thể là bắt buộc',
+      },
+      isMongoId: {
+        errorMessage: 'ID biến thể không hợp lệ',
+      },
+    },
+    'items.*.quantity': {
       isInt: {
         options: { min: 1 },
-        errorMessage: "Số lượng phải là số nguyên >= 1",
+        errorMessage: 'Số lượng phải là số nguyên >= 1',
       },
     },
-  },
+  },  
   // Cập nhật số lượng sản phẩm trong giỏ hàng
   updateCartItem: {
     productId: {
