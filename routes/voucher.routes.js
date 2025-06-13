@@ -14,7 +14,7 @@ const createVoucherSchema = validationSchemas.createVoucher;
  * @desc    Áp dụng mã giảm giá
  * @access  Private
  */
-router.post('/apply', validateMiddleware(applyVoucherSchema), voucherController.applyVoucher);
+router.post('/apply', auth.authMiddleware,validateMiddleware(applyVoucherSchema), voucherController.applyVoucher);
 
 /**
  * Áp dụng middleware xác thực và quyền admin cho các route quản lý

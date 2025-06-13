@@ -30,7 +30,7 @@ const authenticateAdmin = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     
     // Tìm admin trong database
-    const admin = await Admin.findById(decoded._id).select('-password');
+    const admin = await Admin.findById(decoded.id).select('-password');
     
     if (!admin) {
       return res.status(401).json({

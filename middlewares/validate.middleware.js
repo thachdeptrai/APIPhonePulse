@@ -419,15 +419,7 @@ const validationSchemas = {
         errorMessage: "ID sản phẩm không hợp lệ",
       },
     },
-    rating: {
-      notEmpty: {
-        errorMessage: "Đánh giá là bắt buộc",
-      },
-      isInt: {
-        options: { min: 1, max: 5 },
-        errorMessage: "Đánh giá phải là số nguyên từ 1 đến 5",
-      },
-    },
+    
     comment: {
       optional: true,
       isLength: {

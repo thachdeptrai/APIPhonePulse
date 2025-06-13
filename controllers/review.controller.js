@@ -29,9 +29,11 @@ class ReviewController {
      * @access  Private
      */
     static async addReview(req, res) {
+        // console.log("req.user = ", req.user);
+        // console.log("userId: ", req.user._id);
         const { productId, content, images, number_of_stars } = req.body;
         try {
-            const review = new Review({
+                const review = new Review({
                 userId: req.user._id,
                 productId,
                 content,

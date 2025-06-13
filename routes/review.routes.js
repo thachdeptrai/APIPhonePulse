@@ -25,20 +25,20 @@ router.get('/:productId', reviewController.getReviews);
  * @desc    Thêm đánh giá mới cho sản phẩm
  * @access  Private
  */
-router.post('/', validateMiddleware(reviewSchema), reviewController.addReview);
+router.post('/', auth.authMiddleware ,validateMiddleware(reviewSchema), reviewController.addReview);
 
 /**
  * @route   PUT /api/reviews/:id
  * @desc    Cập nhật đánh giá của người dùng hiện tại
  * @access  Private
  */
-router.put('/:id', validateMiddleware(reviewSchema), reviewController.updateReview);
+router.put('/:id',auth.authMiddleware, validateMiddleware(reviewSchema), reviewController.updateReview);
 
 /**
  * @route   DELETE /api/reviews/:id
  * @desc    Xóa đánh giá của người dùng hiện tại
  * @access  Private
  */
-router.delete('/:id', reviewController.deleteReview);
+router.delete('/:id',auth.authMiddleware, reviewController.deleteReview);
 
 module.exports = router;
