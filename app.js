@@ -12,10 +12,14 @@ const cartRoutes = require('./routes/cart.routes');
 const favRoutes = require('./routes/favourite.routes');
 const reviewRoutes = require('./routes/review.routes');
 const voucherRoutes = require('./routes/voucher.routes');
+const orderRoutes = require('./routes/order.routes');  
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+//oder 
+app.use('/api/orders', orderRoutes);
 
 app.use('/api/admin', adminRoutes);
 // Route cho users
