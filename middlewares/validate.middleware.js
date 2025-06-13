@@ -401,6 +401,77 @@ const validationSchemas = {
       },
     },
   },
+  // Thêm đánh giá sản phẩm
+  review: {
+    productId: {
+      notEmpty: {
+        errorMessage: "ID sản phẩm là bắt buộc",
+      },
+      isMongoId: {
+        errorMessage: "ID sản phẩm không hợp lệ",
+      },
+    },
+    rating: {
+      notEmpty: {
+        errorMessage: "Đánh giá là bắt buộc",
+      },
+      isInt: {
+        options: { min: 1, max: 5 },
+        errorMessage: "Đánh giá phải là số nguyên từ 1 đến 5",
+      },
+    },
+    comment: {
+      optional: true,
+      isLength: {
+        options: { max: 500 },
+        errorMessage: "Bình luận không được dài quá 500 ký tự",
+      },
+      trim: true,
+    },
+  },
+  // Schema áp dụng voucher
+applyVoucher: {
+  code: {
+    notEmpty: {
+      errorMessage: "Code không được để trống",
+    },
+    trim: true,
+  },
+},
+
+createVoucher: {
+  code: {
+    notEmpty: {
+      errorMessage: "Code không được để trống",
+    },
+    trim: true,
+  },
+  discount: {
+    isNumeric: {
+      errorMessage: "Discount phải là số",
+    },
+    notEmpty: {
+      errorMessage: "Discount là bắt buộc",
+    },
+  },
+  expireAt: {
+    isDate: {
+      errorMessage: "Ngày hết hạn không hợp lệ",
+    },
+    notEmpty: {
+      errorMessage: "Ngày hết hạn là bắt buộc",
+    },
+  },
+  quantity: {
+    isInt: {
+      options: { min: 1 },
+      errorMessage: "Số lượng phải là số nguyên >= 1",
+    },
+    notEmpty: {
+      errorMessage: "Số lượng là bắt buộc",
+    },
+  },
+},
 
   // Xoá sản phẩm khỏi giỏ hàng
   removeFromCart: {
