@@ -28,6 +28,7 @@ class FavouriteController {
      * @access  Private
      */
     static async addFavourite(req, res) {
+        console.log("req.user = ", req.user);
         const { productId } = req.body;
         try {
             const existingFavourite = await Favourite.findOne({

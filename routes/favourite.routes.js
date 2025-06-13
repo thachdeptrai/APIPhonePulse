@@ -17,20 +17,20 @@ const delletefavouriteSchema = validationSchemas.removeFromFavourite;
  * @desc    Lấy danh sách sản phẩm yêu thích của người dùng hiện tại
  * @access  Private
  */
-router.get('/', favController.getFavourites);
+router.get('/',auth.authMiddleware, favController.getFavourites);
 
 /**
  * @route   POST /api/favourites
  * @desc    Thêm sản phẩm vào danh sách yêu thích
  * @access  Private
  */
-router.post('/', validateMiddleware(addfavouriteSchema), favController.addFavourite);
+router.post('/', auth.authMiddleware,validateMiddleware(addfavouriteSchema), favController.addFavourite);
 
 /**
  * @route   DELETE /api/favourites
  * @desc    Xóa sản phẩm khỏi danh sách yêu thích
  * @access  Private
  */
-router.delete('/', validateMiddleware(delletefavouriteSchema), favController.removeFavourite);
+router.delete('/',auth.authMiddleware, validateMiddleware(delletefavouriteSchema), favController.removeFavourite);
 
 module.exports = router;

@@ -341,31 +341,20 @@ const validationSchemas = {
   },
   // Schema thêm vào yêu thích
   addFavourite: {
-    user_id: {
+    productId: {
       notEmpty: true,
       isLength: {
         options: { min: 1 },
-        errorMessage: "user_id là bắt buộc",
-      },
-    },
-    product_id: {
-      notEmpty: true,
-      isLength: {
-        options: { min: 1 },
-        errorMessage: "product_id là bắt buộc",
+        errorMessage: "productId là bắt buộc",
       },
     },
   },
 
   // Schema xoá khỏi yêu thích
   removeFromFavourite: {
-    user_id: {
+    productId: {
       notEmpty: true,
-      errorMessage: "user_id là bắt buộc",
-    },
-    product_id: {
-      notEmpty: true,
-      errorMessage: "product_id là bắt buộc",
+      errorMessage: "productId là bắt buộc",
     },
   },
   addToCart: {
@@ -446,15 +435,15 @@ createVoucher: {
     },
     trim: true,
   },
-  discount: {
+  discount_value: {
     isNumeric: {
-      errorMessage: "Discount phải là số",
+      errorMessage: "discount_value phải là số",
     },
     notEmpty: {
-      errorMessage: "Discount là bắt buộc",
+      errorMessage: "discount_value là bắt buộc",
     },
   },
-  expireAt: {
+  end_date: {
     isDate: {
       errorMessage: "Ngày hết hạn không hợp lệ",
     },
