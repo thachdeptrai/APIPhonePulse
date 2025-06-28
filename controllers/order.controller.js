@@ -47,7 +47,7 @@ class OrderController {
    */
   static async cancelOrder(req, res) {
     try {
-      const order = await Order.findOne({ _id: req.params._id, userId: req.user._id });
+      const order = await Order.findOne({ _id: req.params.id, userId: req.user.id });
       if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
 
       if (order.status !== "pending")
@@ -69,7 +69,7 @@ class OrderController {
   static async updateStatus(req, res) {
     try {
       const { status, payment_status, shipping_status, shipping_date, delivered_date } = req.body;
-      const order = await Order.findById(req.params._id);
+      const order = await Order.findById(req.params.id);
       if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
 
       if (status) order.status = status;

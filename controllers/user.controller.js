@@ -188,14 +188,14 @@ class UserController {
   static async getUserById(req, res) {
     try {
       // Kiểm tra quyền admin hoặc chính user đó
-      if (!UserUtils.isAdmin(req.user) && req.user._id !== req.params._id) {
+      if (!UserUtils.isAdmin(req.user) && req.user.id !== req.params.id) {
         return res.status(403).json({
           success: false,
           message: "Không có quyền truy cập",
         });
       }
 
-      const user = await UserService.getUserById(req.params._id);
+      const user = await UserService.getUserById(req.params.id);
 
       res.status(200).json({
         success: true,
@@ -224,7 +224,7 @@ class UserController {
         });
       }
 
-      const userId = req.params._id;
+      const userId = req.params.id;
       const updateData = req.body;
 
       const updatedUser = await UserService.updateUser(userId, updateData);
@@ -257,14 +257,14 @@ class UserController {
       }
 
       // Không cho phép admin tự xóa chính mình
-      if (req.user._id === req.params._id) {
+      if (req.user._id === req.params.id) {
         return res.status(400).json({
           success: false,
           message: "Không thể xóa chính mình",
         });
       }
 
-      const result = await UserService.deleteUser(req.params._id);
+      const result = await UserService.deleteUser(req.params.id);
 
       res.status(200).json({
         success: true,
@@ -292,7 +292,7 @@ class UserController {
         });
       }
 
-      const restoredUser = await UserService.restoreUser(req.params._id);
+      const restoredUser = await UserService.restoreUser(req.params.id);
 
       res.status(200).json({
         success: true,
@@ -321,7 +321,7 @@ class UserController {
         });
       }
 
-      const verifiedUser = await UserService.verifyUser(req.params._id);
+      const verifiedUser = await UserService.verifyUser(req.params.id);
 
       res.status(200).json({
         success: true,
