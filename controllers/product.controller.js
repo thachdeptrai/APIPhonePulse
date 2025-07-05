@@ -37,6 +37,27 @@ exports.getById = async (req, res) => {
   }
 };
 
+// Tìm kiếm sản phẩm theo tên
+exports.searchByName = async (req, res) => {
+  try {
+    const keyword = req.query.name || '';
+    const products = await Product.find({
+      product_name: { $regex: keyword, $options: 'i' }
+    })
+    .populate("category_id")
+    .populate("productimage_id")
+    .populate({
+      path: "variant_id",
+      populate: ["color_id", "size_id"],
+    });
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 //  Tạo sản phẩm mới
 exports.add = async (req, res) => {
   try {

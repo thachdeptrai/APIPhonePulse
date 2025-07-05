@@ -5,8 +5,10 @@ const productController = require('../controllers/product.controller');
 // Lấy tất cả sản phẩm
 router.get('/', productController.getAll);
 
-// Lấy sản phẩm theo ID
+// Lấy sản phẩm theo Tên/ID
+router.get("/search", productController.searchByName);
 router.get('/:id', productController.getById);
+
 
 // Tạo sản phẩm mới
 router.post('/', productController.add);
