@@ -15,22 +15,20 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage }); // Khởi tạo middleware upload
 
-// ===========================
 //  Thêm ảnh sản phẩm
-// ===========================
 // POST /products/:id/images
 // Hỗ trợ upload file (form-data) hoặc link (JSON body)
 router.post('/:id/images', upload.single('image'), productImageController.addImage);
 
-// ===========================
+
 //  Lấy danh sách ảnh theo product_id
-// ===========================
+
 // GET /products/:id/images
 router.get('/:id/images', productImageController.getImages);
 
-// ===========================
+
 //  Xoá ảnh theo ID ảnh (không phải product_id)
-// ===========================
+
 // DELETE /products/:id/images?imageId=<ID của ảnh>
 router.delete('/:id/images', productImageController.deleteImage);
 

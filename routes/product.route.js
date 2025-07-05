@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/product.controller');
 
+// Tìm kiếm sản phẩm
+router.get('/search', productController.getName);
 // Lấy tất cả sản phẩm
 router.get('/', productController.getAll);
 
