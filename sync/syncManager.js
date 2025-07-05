@@ -1,171 +1,49 @@
-// sync/syncManager.js
 const mongoose = require('mongoose');
-const mysql = require('mysql2/promise');
-require('dotenv').config();
+const initMySQL = require('./initMySQL');
+const userHandler = require('./handlers/userHandler');
+// const productHandler = require('./handlers/productHandler'); // sẵn sàng cho scale
 
 const syncFunctions = {};
 
-// Kết nối MySQL
-async function initMySQL() {
-  const connection = await mysql.createConnection({
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DB
-  });
-  return connection;
-}
-// Dùng mongooseModel.updateOne({ _id }, doc, { upsert: true }) để đẩy vào Mongo
-async function syncRowToMongo(modelName, row, mongooseModel) {
-    switch (modelName) {
-      case 'User':
-        await mongooseModel.updateOne(
-          { _id: row.id },
-          {
-            $set: {
-              name: row.name,
-              email: row.email,
-              password: row.password,
-              avatar_url: row.avatar_url,
-              phone: row.phone,
-              address: row.address,
-              gender: row.gender,
-              birthday: row.birthday,
-              role: row.role,
-              status: row.status,
-              is_verified: row.is_verified,
-              created_date: row.created_date,
-              modified_date: row.modified_date
-            }
-          },
-          { upsert: true }
-        );
-        break;
-  
-      // TODO: model khác
-    }
-  }
-  
-// Hàm xử lý insert/update từ MongoDB → MySQL
-async function syncDocumentToMySQL(modelName, doc, connection) {
-  switch (modelName) {
-    case 'User':
-      await connection.execute(`
-        INSERT INTO users (id, name, email, password, avatar_url, phone, address, gender, birthday, role, status, is_verified, created_date, modified_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-          name = VALUES(name),
-          email = VALUES(email),
-          password = VALUES(password),
-          avatar_url = VALUES(avatar_url),
-          phone = VALUES(phone),
-          address = VALUES(address),
-          gender = VALUES(gender),
-          birthday = VALUES(birthday),
-          role = VALUES(role),
-          status = VALUES(status),
-          is_verified = VALUES(is_verified),
-          modified_date = VALUES(modified_date)
-      `, [
-        doc._id.toString(),
-        doc.name,
-        doc.email,
-        doc.password,
-        doc.avatar_url,
-        doc.phone,
-        doc.address,
-        doc.gender,
-        doc.birthday,
-        doc.role,
-        doc.status,
-        doc.is_verified,
-        doc.created_date,
-        doc.modified_date
-      ]);
-      break;
+const handlerMap = {
+  User: userHandler,
+  // Product: productHandler
+};
 
-    // TODO: Các model khác
-  }
-}
-
-// Hàm xử lý delete MongoDB → MySQL
-async function deleteFromMySQL(modelName, docId, connection) {
-  switch (modelName) {
-    case 'User':
-      await connection.execute(
-        `DELETE FROM users WHERE id = ?`,
-        [docId.toString()]
-      );
-      break;
-
-    // TODO: Các model khác
-  }
-}
-
-// Realtime bằng Change Stream
-// Thêm hàm startRealtimeSync vào syncManager.js
-
-syncFunctions.startRealtimeSync = async function (modelName, mongooseModel) {
-    const connection = await initMySQL();
-  
-    console.log(`📡 Realtime ChangeStream bắt đầu cho model: ${modelName}`);
-  
-    const changeStream = mongooseModel.watch([], {
-      fullDocument: 'updateLookup' // Cần cái này để lấy doc đầy đủ khi update
-    });
-  
-    changeStream.on('change', async (change) => {
-      try {
-        const doc = change.fullDocument;
-  
-        // Nếu không có doc (null/undefined) thì skip
-        if (!doc) {
-          console.warn(`⚠️ Không có fullDocument cho ${modelName}, operation: ${change.operationType}`);
-          return;
-        }
-  
-        await syncDocumentToMySQL(modelName, doc, connection);
-        console.log(`✅ Realtime synced ${modelName} _id=${doc._id}`);
-      } catch (err) {
-        console.error(`❌ Lỗi realtime sync ${modelName}:`, err.message);
-      }
-    });
-  
-    changeStream.on('error', (err) => {
-      console.error(`❌ Change stream error for ${modelName}:`, err.message);
-    });
-  };
-
-  const lastSyncedMySQL = {};
-
+// Reverse sync: MySQL → Mongo
 syncFunctions.startReversePolling = async function (modelName, mongooseModel) {
+  const handler = handlerMap[modelName];
+  if (!handler) throw new Error(`❌ Không có handler cho model: ${modelName}`);
+
   const connection = await initMySQL();
+  const lastSynced = new Date(0);
 
-  if (!lastSyncedMySQL[modelName]) {
-    lastSyncedMySQL[modelName] = new Date(0); // sync từ đầu
-  }
-
-  console.log(`⏳ Polling MySQL → Mongo bắt đầu cho model: ${modelName}`);
+  console.log(`⏳ Polling MySQL → Mongo cho ${modelName}`);
 
   setInterval(async () => {
     try {
-      const since = lastSyncedMySQL[modelName];
+      // 1. Lấy toàn bộ hàng để check xóa
+      const [allRows] = await connection.execute(`SELECT mongo_id FROM users`);
+      const mysqlIdSet = new Set(allRows.map(r => r.mongo_id?.toString()).filter(Boolean));
 
-      let query = '', values = [];
-      switch (modelName) {
-        case 'User':
-          query = `SELECT * FROM users WHERE modified_date > ? ORDER BY modified_date ASC`;
-          values = [since];
-          break;
+      // 2. Lấy toàn bộ doc Mongo để so sánh
+      const mongoDocs = await mongooseModel.find({}, '_id');
+      for (const doc of mongoDocs) {
+        if (!mysqlIdSet.has(doc._id.toString())) {
+          await handler.deleteFromMongo(doc._id, mongooseModel);
+        }
       }
 
-      const [rows] = await connection.execute(query, values);
-      for (const row of rows) {
-        await syncRowToMongo(modelName, row, mongooseModel);
+      // 3. Lấy dữ liệu mới/cập nhật từ MySQL
+      const [rows] = await connection.execute(
+        `SELECT * FROM users WHERE modified_date > ?`,
+        [lastSynced]
+      );
 
-        // Cập nhật lastSync
-        if (row.modified_date > lastSyncedMySQL[modelName]) {
-          lastSyncedMySQL[modelName] = row.modified_date;
+      for (const row of rows) {
+        await handler.syncRowToMongo(row, mongooseModel);
+        if (row.modified_date > lastSynced) {
+          lastSynced.setTime(new Date(row.modified_date).getTime());
         }
       }
 
@@ -173,9 +51,45 @@ syncFunctions.startReversePolling = async function (modelName, mongooseModel) {
         console.log(`↩️  Đã sync ${rows.length} ${modelName}(s) từ MySQL → Mongo`);
       }
     } catch (err) {
-      console.error(`❌ Lỗi reverse sync ${modelName}:`, err.message);
+      console.error(`❌ Lỗi polling ${modelName}:`, err.message);
     }
-  }, 1 * 1000); // 1 giây
+  }, 1000); // 1 giây
+};
+
+// Realtime sync: Mongo → MySQL
+syncFunctions.startRealtimeSync = async function (modelName, mongooseModel) {
+  const handler = handlerMap[modelName];
+  if (!handler) throw new Error(`❌ Không có handler cho model: ${modelName}`);
+
+  const connection = await initMySQL();
+
+  console.log(`📡 Listening ChangeStream cho ${modelName}`);
+
+  const changeStream = mongooseModel.watch([], {
+    fullDocument: 'updateLookup',
+  });
+
+  changeStream.on('change', async (change) => {
+    try {
+      const doc = change.fullDocument;
+
+      if (change.operationType === 'delete') {
+        await handler.deleteFromMySQL(change.documentKey._id, connection);
+        return;
+      }
+
+      if (doc) {
+        await handler.syncDocumentToMySQL(doc, connection);
+        console.log(`✅ Realtime synced ${modelName} _id=${doc._id}`);
+      }
+    } catch (err) {
+      console.error(`❌ Lỗi ChangeStream ${modelName}:`, err.message);
+    }
+  });
+
+  changeStream.on('error', (err) => {
+    console.error(`💥 ChangeStream error: ${err.message}`);
+  });
 };
 
 module.exports = syncFunctions;
