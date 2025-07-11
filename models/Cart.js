@@ -49,7 +49,7 @@ const cartSchema = new mongoose.Schema(
             default: [],
             description: 'Mảng các món trong giỏ hàng',
         },
-        updatedAt: {
+        modified_date: {
             type: Date,
             required: true,
             default: Date.now,
@@ -57,7 +57,7 @@ const cartSchema = new mongoose.Schema(
         },
     },
     {
-        timestamps: { createdAt: false, updatedAt: true },
+        timestamps: { createdAt: false, modified_date: true },
     }
 );
 

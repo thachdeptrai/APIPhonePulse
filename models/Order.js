@@ -112,7 +112,7 @@ const orderSchema = new mongoose.Schema(
   {
     timestamps: {
       createdAt: 'created_date',
-      updatedAt: 'modified_date',
+      modified_date : 'modified_date',
     },
   }
 );

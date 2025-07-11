@@ -21,7 +21,7 @@ const favouriteSchema = new mongoose.Schema(
             required: true,
             description: 'ID của sản phẩm trong danh sách yêu thích, khóa ngoại tới products',
         },
-        addedAt: {
+        modified_date: {
             type: Date,
             required: true,
             default: Date.now,

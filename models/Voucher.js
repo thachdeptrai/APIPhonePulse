@@ -61,6 +61,11 @@ const voucherSchema = new mongoose.Schema(
             default: Date.now,
             description: 'Ngày tạo mã',
         },
+        modified_date : {
+            type: Date,
+            default: Date.now,
+            description: 'Ngày chỉnh sửa mã',
+        },
     },
     {
         timestamps: false,
