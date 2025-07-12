@@ -12,9 +12,9 @@ module.exports = {
     const updateDoc = {
       product_name: row.product_name,
       description: row.description,
-      category_id: row.category_mongo_id,
-      variant_id: row.variant_mongo_id,
-      productimage_id: row.productimage_mongo_id,
+      category_id: row.category_id,
+      variant_id: row.variant_id,
+      productimage_id: row.productimage_id,
       created_date: row.created_date,
       modified_date: row.modified_date,
     };

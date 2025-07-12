@@ -10,7 +10,7 @@ module.exports = {
       : { image_url: row.image_url };
 
     const updateDoc = {
-      product_id: row.product_mongo_id,
+      product_id: row.product_id,
       image_url: row.image_url,
     };
 

@@ -7,12 +7,12 @@ module.exports = {
 
     const filter = row.mongo_id
       ? { _id: row.mongo_id }
-      : { product_id: row.product_mongo_id, color_id: row.color_mongo_id, size_id: row.size_mongo_id };
+      : { product_id: row.product_id, color_id: row.color_id, size_id: row.size_id };
 
     const updateDoc = {
-      product_id: row.product_mongo_id,
-      color_id: row.color_mongo_id,
-      size_id: row.size_mongo_id,
+      product_id: row.product_id,
+      color_id: row.color_id,
+      size_id: row.size_id,
       quantity: row.quantity,
       price: row.price,
       created_date: row.created_date,
