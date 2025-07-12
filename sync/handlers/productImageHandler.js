@@ -26,7 +26,7 @@ module.exports = {
           [doc._id.toString(), row.id]
         );
 
-        console.log(`🔗 Cập nhật mongo_id cho product_image id=${row.id}`);
+        // console.log(`🔗 Cập nhật mongo_id cho product_image id=${row.id}`);
       }
     } catch (error) {
       console.error(`❌ Lỗi đồng bộ product_image từ MySQL → Mongo:`, error);
@@ -35,16 +35,22 @@ module.exports = {
     }
   },
 
-  // Mongo → MySQL
-  async syncDocumentToMySQL(doc) {
-    const connection = await pool.getConnection();
-    try {
+// Mongo → MySQL
+async syncDocumentToMySQL(doc) {
+  const connection = await pool.getConnection();
+  try {
+    // Check xem đã có bản ghi mongo_id này chưa
+    const [rows] = await connection.execute(
+      `SELECT id FROM product_images WHERE mongo_id = ?`,
+      [doc._id.toString()]
+    );
+
+    if (rows.length === 0) {
+      // Nếu chưa có thì insert
       await connection.execute(
         `
         INSERT INTO product_images (mongo_id, product_id, image_url)
         VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-          image_url=VALUES(image_url)
       `,
         [
           doc._id.toString(),
@@ -52,15 +58,28 @@ module.exports = {
           doc.image_url,
         ]
       );
-
-      console.log(`✅ Synced product_image mongo_id=${doc._id}`);
-    } catch (error) {
-      console.error(`❌ Lỗi đồng bộ product_image từ Mongo → MySQL:`, error);
-    } finally {
-      connection.release();
+      // console.log(`✅ Synced (insert) product_image mongo_id=${doc._id}`);
+    } else {
+      // Nếu đã có, thì chỉ update nếu cần
+      await connection.execute(
+        `
+        UPDATE product_images
+        SET image_url = ?
+        WHERE mongo_id = ?
+      `,
+        [
+          doc.image_url,
+          doc._id.toString(),
+        ]
+      );
+      // console.log(`🔄 Synced (update) product_image mongo_id=${doc._id}`);
     }
-  },
-
+  } catch (error) {
+    console.error(`❌ Lỗi đồng bộ product_image từ Mongo → MySQL:`, error);
+  } finally {
+    connection.release();
+  }
+},
   // Mongo → MySQL: Xóa
   async deleteFromMySQL(mongoId) {
     const connection = await pool.getConnection();
