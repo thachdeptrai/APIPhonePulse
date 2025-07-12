@@ -160,5 +160,4 @@ router.put('/:id/restore', adminMiddleware, UserController.restoreUser);
  * @access  Private (Admin only)
  */
 router.put('/:id/verify', adminMiddleware, UserController.verifyUser);
-
 module.exports = router;
