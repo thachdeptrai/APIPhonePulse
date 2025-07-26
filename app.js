@@ -14,6 +14,8 @@ const reviewRoutes = require('./routes/review.routes');
 const voucherRoutes = require('./routes/voucher.routes');
 const orderRoutes = require('./routes/order.routes'); 
 const authRoutes = require('./routes/auth.routes');
+const ramRoutes = require('./routes/ram.routes');
+
 const app = express();
 
 app.use(cors());
@@ -53,4 +55,5 @@ app.use('/api/vouchers', voucherRoutes);
 
 app.use('/api/auth', authRoutes);
 
+app.use('/api/ram', ramRoutes);
 module.exports = app;

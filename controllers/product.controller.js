@@ -3,6 +3,7 @@ const ProductImage = require("../models/ProductImage");
 const Variant = require('../models/Variant'); 
 const Category = require('../models/Category');
 const Size = require('../models/Size');
+const Ram = require('../models/Ram');
 // Lấy tất cả sản phẩm kèm theo biến thể của từng sản phẩm
 // 📦 Lấy tất cả sản phẩm kèm theo ảnh và biến thể
 exports.getAll = async (req, res) => {
@@ -55,8 +56,8 @@ exports.getById = async (req, res) => {
     // Tìm tất cả biến thể thuộc sản phẩm này, bao gồm thông tin color & size
     const variants = await Variant.find({ product_id: product._id })
       .populate("color_id")  // Lấy thông tin chi tiết của màu sắc (Color)
-      .populate("size_id");  // Lấy thông tin chi tiết của dung lượng/kích thước (Size)
-
+      .populate("size_id")  // Lấy thông tin chi tiết của dung lượng/kích thước (Size)
+      .populate("ram_id");
     // Trả về kết quả gồm: thông tin sản phẩm + mảng ảnh + mảng biến thể
     res.json({
       ...product.toObject(),  // Chuyển từ Mongoose Document sang object thường
@@ -71,53 +72,75 @@ exports.getById = async (req, res) => {
 
 exports.getName = async (req, res) => {
   try {
-    const { name, category, size, minPrice, maxPrice } = req.query;
+    // Lấy các tham số lọc từ query của URL
+    const { name, category, size, ram, minPrice, maxPrice } = req.query;
 
-    const productFilter = {};
+    const productFilter = {}; // Bộ lọc cho bảng Product
+
+    // Nếu có tên sản phẩm, lọc theo tên (dùng regex để tìm gần đúng, không phân biệt hoa thường)
     if (name) {
       productFilter.product_name = { $regex: name, $options: 'i' };
     }
 
+    //  Nếu có tên danh mục, tìm Category tương ứng và lọc theo category_id
     if (category) {
       const foundCategory = await Category.findOne({ name: { $regex: category, $options: 'i' } });
       if (foundCategory) {
         productFilter.category_id = foundCategory._id;
       } else {
-        return res.json([]); // Không tìm thấy danh mục
+        return res.json([]); // Không tìm thấy danh mục → trả mảng rỗng
       }
     }
 
+    //  Tìm tất cả sản phẩm thỏa điều kiện productFilter
     const products = await Product.find(productFilter)
-      .populate('category_id');
+      .populate('category_id'); // Lấy thêm thông tin chi tiết về danh mục
 
+    //  Duyệt qua từng sản phẩm để tiếp tục lọc theo variant
     const result = await Promise.all(
       products.map(async (product) => {
-        const variantFilter = { product_id: product._id };
+        const variantFilter = { product_id: product._id }; // Lọc variant theo id sản phẩm
 
+        //  Nếu có lọc theo dung lượng lưu trữ (size), tìm size tương ứng và gán vào variantFilter
         if (size) {
           const foundSize = await Size.findOne({ storage: { $regex: size, $options: 'i' } });
           if (foundSize) {
             variantFilter.size_id = foundSize._id;
           } else {
-            return null;
+            return null; // Không tìm thấy size tương ứng → bỏ sản phẩm này
           }
         }
 
-        if (minPrice || maxPrice) {
-          variantFilter.price = {};
-          if (minPrice) variantFilter.price.$gte = parseFloat(minPrice);
-          if (maxPrice) variantFilter.price.$lte = parseFloat(maxPrice);
+        //  Nếu có lọc theo RAM, tìm RAM tương ứng và gán vào variantFilter
+        if (ram) {
+          const foundRam = await Ram.findOne({ ram_name: { $regex: ram, $options: 'i' } }); // ram_value là tên trường RAM
+          if (foundRam) {
+            variantFilter.ram_id = foundRam._id;
+          } else {
+            return null; // Không tìm thấy RAM phù hợp → bỏ sản phẩm này
+          }
         }
 
-        const variants = await Variant.find(variantFilter)
-          .populate('color_id')
-          .populate('size_id');
+        //  Nếu có lọc theo khoảng giá
+        if (minPrice || maxPrice) {
+          variantFilter.price = {}; // Khởi tạo object lọc giá
+          if (minPrice) variantFilter.price.$gte = parseFloat(minPrice); // Giá lớn hơn hoặc bằng minPrice
+          if (maxPrice) variantFilter.price.$lte = parseFloat(maxPrice); // Giá nhỏ hơn hoặc bằng maxPrice
+        }
 
+        //  Tìm các variant theo các điều kiện đã lọc ở trên
+        const variants = await Variant.find(variantFilter)
+          .populate('color_id')   // Lấy chi tiết màu sắc
+          .populate('size_id')    // Lấy chi tiết dung lượng (size)
+          .populate('ram_id');    // Lấy chi tiết RAM
+
+        //  Nếu không có variant phù hợp thì bỏ qua sản phẩm này
         if (variants.length === 0) return null;
 
-        // ✅ Truy vấn ảnh sản phẩm theo product_id
+        //  Lấy tất cả ảnh sản phẩm từ bảng ProductImage theo id sản phẩm
         const images = await ProductImage.find({ product_id: product._id });
 
+        //  Trả về kết quả gồm sản phẩm, các phiên bản (variants) và ảnh
         return {
           ...product.toObject(),
           variants,
@@ -126,11 +149,14 @@ exports.getName = async (req, res) => {
       })
     );
 
+    //  Lọc bỏ những sản phẩm null (không có variant phù hợp) và trả về client
     res.json(result.filter(p => p !== null));
   } catch (err) {
+    //  Bắt lỗi và trả về lỗi 500 (Internal Server Error)
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 //  Tạo sản phẩm mới
