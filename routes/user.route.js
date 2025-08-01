@@ -5,7 +5,7 @@ const UserController = require('../controllers/user.controller');
 const { authMiddleware, adminMiddleware } = require('../middlewares/auth.middleware');
 const {validateMiddleware} = require('../middlewares/validate.middleware');
 const { validationSchemas } = require('../middlewares/validate.middleware');
-
+const chatRoomController = require('../controllers/chatRoom.controller');
 // Sử dụng validation schemas từ validateMiddleware
 const registerSchema = validationSchemas.register;
 const loginSchema = validationSchemas.login;
@@ -22,7 +22,7 @@ router.post('/register',
     validateMiddleware(registerSchema), 
     UserController.register
 );
-
+router.post('/chat/room', chatRoomController.createOrGetRoom);
 /**
  * @route   POST /api/users/login
  * @desc    Đăng nhập

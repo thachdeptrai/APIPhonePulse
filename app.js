@@ -15,7 +15,8 @@ const voucherRoutes = require('./routes/voucher.routes');
 const orderRoutes = require('./routes/order.routes'); 
 const authRoutes = require('./routes/auth.routes');
 const ramRoutes = require('./routes/ram.routes');
-
+const chatRoutes = require('./routes/chat.route');
+const chatAdminRoutes = require('./routes/ChatAdmin.route'); 
 const app = express();
 
 app.use(cors());
@@ -54,6 +55,9 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/vouchers', voucherRoutes);
 
 app.use('/api/auth', authRoutes);
+
+app.use('/api/chat', chatRoutes);
+app.use('/api/chat', chatAdminRoutes);
 
 app.use('/api/ram', ramRoutes);
 module.exports = app;
