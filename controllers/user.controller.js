@@ -53,13 +53,10 @@ class UserController {
   static async getProfile(req, res) {
   try {
     const userId = req.user?._id; // Lấy từ middleware auth
-    console.log("✅ [getProfile] User ID từ token:", userId);
 
     const user = await UserService.getUserById(userId);
-    console.log("✅ [getProfile] Thông tin người dùng tìm được:", user);
 
     if (!user) {
-      console.log("❌ [getProfile] Không tìm thấy người dùng với ID:", userId);
       return res.status(404).json({
         success: false,
         message: "Không tìm thấy người dùng",
@@ -72,7 +69,6 @@ class UserController {
       data: user,
     });
   } catch (error) {
-    console.error("❌ [getProfile] Lỗi:", error.message);
     res.status(500).json({
       success: false,
       message: error.message,
