@@ -42,7 +42,7 @@ router.post('/login',
  * @desc    Lấy thông tin profile của user hiện tại
  * @access  Private
  */
-router.get('/profile', UserController.getProfile);
+router.get('/profile',authMiddleware, UserController.getProfile);
 
 /**
  * @route   PUT /api/users/profile

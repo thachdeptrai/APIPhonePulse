@@ -217,15 +217,17 @@ class CartController {
    * @access  Private
    */
   static async removeFromCart(req, res) {
-    const { productId, variantId } = req.body;
-    console.log("--- DELETE /api/cart requested ---");
-    console.log(`Attempting to remove item from cart for user: ${req.user._id}`);
-    console.log(`Received: Product ID: ${productId}, Variant ID: ${variantId}`);
+  const { productId, variantId } = req.body;
+  console.log("--- DELETE /api/cart requested ---");
+  console.log(`Attempting to remove item from cart for user: ${req.user._id}`);
+  console.log(`Received: Product ID: ${productId}, Variant ID: ${variantId}`);
 
-    try {
+  try {
+    // 👉 Nếu không có productId và variantId, hiểu là xoá toàn bộ
+    if (!productId && !variantId) {
       const cart = await Cart.findOneAndUpdate(
         { userId: req.user._id },
-        { $pull: { items: { productId, variantId } } },
+        { $set: { items: [] } },
         { new: true }
       );
 
@@ -236,24 +238,47 @@ class CartController {
           .json({ success: false, message: "Không tìm thấy giỏ hàng" });
       }
 
-      console.log(`Item removed from cart for user ${req.user._id}. New item count: ${cart.items.length}`);
+      console.log(`Cleared entire cart for user ${req.user._id}`);
 
-      // Sau khi xóa, gọi hàm trợ giúp để populate và gán ảnh
       const updatedAndPopulatedCart = await CartController._populateCartAndAddImages(req.user._id);
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
-        message: "Xóa sản phẩm khỏi giỏ hàng thành công",
+        message: "Đã xoá toàn bộ giỏ hàng",
         data: updatedAndPopulatedCart,
       });
-      console.log("DELETE /api/cart response: Item removed from cart.");
-
-    } catch (error) {
-      console.error(`ERROR in DELETE /api/cart for user ${req.user._id}: ${error.message}`);
-      res.status(500).json({ success: false, message: error.message });
     }
-    console.log("--- DELETE /api/cart finished ---");
+
+    // 👉 Nếu có productId và variantId, xoá theo sản phẩm
+    const cart = await Cart.findOneAndUpdate(
+      { userId: req.user._id },
+      { $pull: { items: { productId, variantId } } },
+      { new: true }
+    );
+
+    if (!cart) {
+      console.log(`Cart not found for user ${req.user._id}.`);
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy giỏ hàng" });
+    }
+
+    console.log(`Item removed from cart for user ${req.user._id}. New item count: ${cart.items.length}`);
+
+    const updatedAndPopulatedCart = await CartController._populateCartAndAddImages(req.user._id);
+
+    res.status(200).json({
+      success: true,
+      message: "Xóa sản phẩm khỏi giỏ hàng thành công",
+      data: updatedAndPopulatedCart,
+    });
+    console.log("DELETE /api/cart response: Item removed from cart.");
+  } catch (error) {
+    console.error(`ERROR in DELETE /api/cart for user ${req.user._id}: ${error.message}`);
+    res.status(500).json({ success: false, message: error.message });
   }
+  console.log("--- DELETE /api/cart finished ---");
+}
 }
 
 module.exports = CartController;

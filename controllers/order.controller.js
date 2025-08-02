@@ -7,24 +7,69 @@ class OrderController {
    * @access  Private
    */
   static async createOrder(req, res) {
-    try {
-      const { items, discount_amount, final_price, shipping_address, payment_method, note } = req.body;
+  try {
+    console.log("===== [CREATE ORDER] =====");
+    console.log("User từ middleware:", req.user);
+    console.log("Body nhận được từ client:", req.body);
 
-      const order = await Order.create({
-        userId: req.user._id,
-        items,
-        discount_amount,
-        final_price,
-        shipping_address,
-        payment_method,
-        note,
-      });
+    const {
+      items,
+      discount_amount,
+      final_price,
+      shipping_address,
+      payment_method,
+      note
+    } = req.body;
 
-      res.status(201).json({ success: true, message: "Tạo đơn hàng thành công", data: order });
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+    // Kiểm tra từng trường một
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      console.error("❌ Lỗi: items không hợp lệ");
+      return res.status(400).json({ success: false, message: "Danh sách sản phẩm không hợp lệ." });
     }
+
+    if (!final_price || typeof final_price !== "number") {
+      console.error("❌ Lỗi: final_price không hợp lệ");
+      return res.status(400).json({ success: false, message: "Giá trị thanh toán không hợp lệ." });
+    }
+
+    if (!shipping_address || typeof shipping_address !== "string") {
+      console.error("❌ Lỗi: shipping_address thiếu hoặc sai kiểu");
+      return res.status(400).json({ success: false, message: "Địa chỉ giao hàng không hợp lệ." });
+    }
+
+    if (!payment_method || typeof payment_method !== "string") {
+      console.error("❌ Lỗi: payment_method thiếu hoặc sai kiểu");
+      return res.status(400).json({ success: false, message: "Phương thức thanh toán không hợp lệ." });
+    }
+
+    // Log chi tiết các trường
+    console.log("✔ items:", items);
+    console.log("✔ discount_amount:", discount_amount);
+    console.log("✔ final_price:", final_price);
+    console.log("✔ shipping_address:", shipping_address);
+    console.log("✔ payment_method:", payment_method);
+    console.log("✔ note:", note);
+
+    // Tạo đơn hàng
+    const order = await Order.create({
+      userId: req.user._id,
+      items,
+      discount_amount,
+      final_price,
+      shipping_address,
+      payment_method,
+      note,
+    });
+
+    console.log("✅ Đơn hàng đã được tạo:", order._id);
+
+    res.status(201).json({ success: true, message: "Tạo đơn hàng thành công", data: order });
+  } catch (error) {
+    console.error("🔥 Lỗi khi tạo đơn hàng:", error);
+    res.status(500).json({ success: false, message: error.message || "Đã xảy ra lỗi khi tạo đơn hàng" });
   }
+}
+
 
   /**
    * @route   GET /api/orders
