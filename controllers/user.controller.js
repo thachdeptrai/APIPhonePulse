@@ -51,22 +51,31 @@ class UserController {
    * GET /api/users/profile
    */
   static async getProfile(req, res) {
-    try {
-      const userId = req.user._id; // Lấy từ middleware auth
-      const user = await UserService.getUserById(userId);
+  try {
+    const userId = req.user?._id; // Lấy từ middleware auth
 
-      res.status(200).json({
-        success: true,
-        message: "Lấy thông tin profile thành công",
-        data: user,
-      });
-    } catch (error) {
-      res.status(404).json({
+    const user = await UserService.getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({
         success: false,
-        message: error.message,
+        message: "Không tìm thấy người dùng",
       });
     }
+
+    res.status(200).json({
+      success: true,
+      message: "Lấy thông tin profile thành công",
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
+}
+
 
   /**
    * Cập nhật profile của user hiện tại
