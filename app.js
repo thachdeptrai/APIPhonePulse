@@ -13,6 +13,9 @@ const favRoutes = require('./routes/favourite.routes');
 const reviewRoutes = require('./routes/review.routes');
 const voucherRoutes = require('./routes/voucher.routes');
 const orderRoutes = require('./routes/order.routes');  
+
+const chatRoutes = require('./routes/chat.route');
+const chatAdminRoutes = require('./routes/Chatadmin.route');
 const app = express();
 
 app.use(cors());

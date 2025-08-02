@@ -4,6 +4,19 @@ const Message = require('../models/Message');
 // Hàm xử lý Socket.IO
 const chatHandler = (io, socket) => {
   console.log('Chat handler initialized');
+  // Cho phép client (admin hoặc user) join room. Hỗ trợ payload là string hoặc object.
+socket.on('join_room', (payload) => {
+  let roomId;
+  if (typeof payload === 'string') {
+    roomId = payload;
+  } else if (payload && payload.roomId) {
+    roomId = payload.roomId;
+  }
+  if (!roomId) return;
+  socket.join(roomId);
+  console.log(`🟡 Socket ${socket.id} joined room ${roomId}`);
+});
+
   socket.on('close_room', async ({ roomId, closedBy }) => {
     try {
       // 1. Cập nhật trạng thái phòng
@@ -37,45 +50,49 @@ const chatHandler = (io, socket) => {
     } catch (error) {
       callback({ status: 'error', message: error.message });
     }
-  });
-  socket.on('send_message', async (data) => {
+  });socket.on('send_message', async (data) => {
     try {
-        const { roomId, senderId, senderType, message, messageType = 'text' } = data;
+      const { roomId, senderId, senderType, message, messageType = 'text' } = data;
   
-        // Lưu vào MongoDB
-        const newMessage = new Message({
-            roomId,
-            senderId,
-            senderType,
-            message,
-            messageType
-        });
+      // Lưu vào MongoDB
+      const newMessage = new Message({
+        roomId,
+        senderId,
+        senderType,
+        message,
+        messageType
+      });
+      await newMessage.save();
   
-        await newMessage.save();
+      // Cập nhật room activity
+      await ChatRoom.findOneAndUpdate(
+        { roomId },
+        { updatedAt: new Date() }
+      );
   
-        // Cập nhật room activity
-        await ChatRoom.findOneAndUpdate(
-            { roomId },
-            { updatedAt: new Date() }
-        );
+      const payload = {
+        _id: newMessage._id,
+        roomId,
+        senderId,
+        senderType,
+        message,
+        messageType,
+        timestamp: newMessage.timestamp
+      };
   
-        // Gửi lại cho tất cả client trong room
-        io.to(roomId).emit('receive_message', {
-            _id: newMessage._id,
-            roomId,
-            senderId,
-            senderType,
-            message,
-            messageType,
-            timestamp: newMessage.timestamp
-        });
+      if (senderType === 'admin') {
+        // Admin đã tự hiển thị rồi, chỉ gửi cho người khác
+        socket.to(roomId).emit('receive_message', payload);
+      } else {
+        io.to(roomId).emit('receive_message', payload);
+      }
   
     } catch (error) {
-        console.error('❌ Lỗi gửi tin nhắn:', error);
-        socket.emit('error', { message: 'Không gửi được tin nhắn' });
+      console.error('❌ Lỗi gửi tin nhắn:', error);
+      socket.emit('error', { message: 'Không gửi được tin nhắn' });
     }
   });
-  // Xử lý sự kiện 'assignAdmin'
+  
   socket.on('assignAdmin', async ({ roomId, adminId }, callback) => {
     try {
       const room = await assignAdmin(roomId, adminId);
@@ -89,12 +106,30 @@ const chatHandler = (io, socket) => {
     }
   });
 
+  socket.on('mark_as_read', async ({ roomId }) => {
+    try {
+      if (!roomId) return;
+      // Chỉ đánh dấu tin nhắn của user (chưa đọc) là đã đọc
+      const result = await Message.updateMany(
+        { roomId, senderType: 'user', isRead: false },
+        { isRead: true }
+      );
+  
+      // Thông báo lại cho admin (và có thể user khác nếu cần) số lượng đã đọc
+      io.to(roomId).emit('messages_read', {
+        roomId,
+        updatedCount: result.modifiedCount || result.nModified || 0
+      });
+    } catch (err) {
+      console.error('Lỗi mark_as_read:', err);
+    }
+  });
+  
   // Xử lý ngắt kết nối
   socket.on('disconnect', () => {
     console.log(`🔴 Client disconnected: ${socket.id}`);
   });
 };
-
 const createOrGetRoom = async (userId) => {
   let room = await ChatRoom.findOne({ userId, status: { $in: ['waiting', 'active'] } });
   if (!room) {

@@ -21,3 +21,25 @@ exports.joinRoom = async (req, res) => {
   if (!room) return res.status(404).json({ success: false, message: 'Room not found or already taken' });
   res.json({ success: true, room });
 };
+
+exports.getUnreadCount = async (req, res) => {
+  const { roomId } = req.params;
+  try {
+    const count = await Message.countDocuments({
+      roomId,
+      senderType: 'user',
+      isRead: false
+    });
+    res.json({ success: true, unread: count });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+exports.getLastMessage = async (req, res) => {
+  const { roomId } = req.params;
+  const last = await Message.find({ roomId })
+    .sort({ timestamp: -1 })
+    .limit(1);
+  res.json({ success: true, messages: last });
+};
