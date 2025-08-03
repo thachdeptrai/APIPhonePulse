@@ -16,6 +16,10 @@ const orderRoutes = require('./routes/order.routes');
 const paymentRoutes = require('./routes/payment.route');
 const chatRoutes = require('./routes/chat.route');
 const chatAdminRoutes = require('./routes/ChatAdmin.route'); 
+
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+
 const app = express();
 
 app.use(cors());
@@ -55,4 +59,5 @@ app.use('/api/chat', chatAdminRoutes);
 app.use('/api/vouchers', voucherRoutes);
 app.use('/api/payments', paymentRoutes);
 
+// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 module.exports = app;

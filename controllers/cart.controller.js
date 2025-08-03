@@ -212,73 +212,79 @@ class CartController {
   }
 
   /**
-   * @route   DELETE /api/cart
-   * @desc    Xóa sản phẩm khỏi giỏ hàng
-   * @access  Private
-   */
-  static async removeFromCart(req, res) {
+ * @route   DELETE /api/cart
+ * @desc    Xóa sản phẩm khỏi giỏ hàng hoặc xóa toàn bộ giỏ hàng nếu không truyền productId và variantId
+ * @access  Private
+ */
+static async removeFromCart(req, res) {
   const { productId, variantId } = req.body;
-  console.log("--- DELETE /api/cart requested ---");
-  console.log(`Attempting to remove item from cart for user: ${req.user._id}`);
-  console.log(`Received: Product ID: ${productId}, Variant ID: ${variantId}`);
+  const userId = req.user._id;
+
+  console.log("=== [DELETE] /api/cart ===");
+  console.log(`User: ${userId}`);
+  console.log(`Received: productId=${productId}, variantId=${variantId}`);
 
   try {
-    // 👉 Nếu không có productId và variantId, hiểu là xoá toàn bộ
+    let cart;
+
+    // ➤ Nếu không truyền productId và variantId → XÓA TOÀN BỘ GIỎ HÀNG
     if (!productId && !variantId) {
-      const cart = await Cart.findOneAndUpdate(
-        { userId: req.user._id },
+      cart = await Cart.findOneAndUpdate(
+        { userId },
         { $set: { items: [] } },
         { new: true }
       );
 
       if (!cart) {
-        console.log(`Cart not found for user ${req.user._id}.`);
-        return res
-          .status(404)
-          .json({ success: false, message: "Không tìm thấy giỏ hàng" });
+        console.warn(`❌ Cart not found for user: ${userId}`);
+        return res.status(404).json({
+          success: false,
+          message: "Không tìm thấy giỏ hàng",
+        });
       }
 
-      console.log(`Cleared entire cart for user ${req.user._id}`);
+      console.log(`✅ Đã xoá toàn bộ giỏ hàng cho user: ${userId}`);
+    } 
+    // ➤ Nếu có productId và variantId → XÓA MỤC SẢN PHẨM CỤ THỂ
+    else {
+      cart = await Cart.findOneAndUpdate(
+        { userId },
+        { $pull: { items: { productId, variantId } } },
+        { new: true }
+      );
 
-      const updatedAndPopulatedCart = await CartController._populateCartAndAddImages(req.user._id);
+      if (!cart) {
+        console.warn(`❌ Cart not found for user: ${userId}`);
+        return res.status(404).json({
+          success: false,
+          message: "Không tìm thấy giỏ hàng",
+        });
+      }
 
-      return res.status(200).json({
-        success: true,
-        message: "Đã xoá toàn bộ giỏ hàng",
-        data: updatedAndPopulatedCart,
-      });
+      console.log(`✅ Đã xoá sản phẩm (productId: ${productId}, variantId: ${variantId}) khỏi giỏ hàng của user: ${userId}`);
     }
 
-    // 👉 Nếu có productId và variantId, xoá theo sản phẩm
-    const cart = await Cart.findOneAndUpdate(
-      { userId: req.user._id },
-      { $pull: { items: { productId, variantId } } },
-      { new: true }
-    );
+    // ➤ Lấy lại giỏ hàng sau khi đã cập nhật (có populate & ảnh)
+    const updatedCart = await CartController._populateCartAndAddImages(userId);
 
-    if (!cart) {
-      console.log(`Cart not found for user ${req.user._id}.`);
-      return res
-        .status(404)
-        .json({ success: false, message: "Không tìm thấy giỏ hàng" });
-    }
-
-    console.log(`Item removed from cart for user ${req.user._id}. New item count: ${cart.items.length}`);
-
-    const updatedAndPopulatedCart = await CartController._populateCartAndAddImages(req.user._id);
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "Xóa sản phẩm khỏi giỏ hàng thành công",
-      data: updatedAndPopulatedCart,
+      message: productId && variantId
+        ? "Đã xóa sản phẩm khỏi giỏ hàng"
+        : "Đã xoá toàn bộ giỏ hàng",
+      data: updatedCart,
     });
-    console.log("DELETE /api/cart response: Item removed from cart.");
   } catch (error) {
-    console.error(`ERROR in DELETE /api/cart for user ${req.user._id}: ${error.message}`);
-    res.status(500).json({ success: false, message: error.message });
+    console.error(`❌ Lỗi khi xoá giỏ hàng cho user: ${userId} | ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi xoá giỏ hàng",
+    });
+  } finally {
+    console.log("=== [/DELETE] /api/cart END ===\n");
   }
-  console.log("--- DELETE /api/cart finished ---");
 }
+
 }
 
 module.exports = CartController;
