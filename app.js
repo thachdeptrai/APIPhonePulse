@@ -22,6 +22,17 @@ const swaggerJsdoc = require('swagger-jsdoc');
 
 const app = express();
 
+// Cấu hình Swagger
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'API quản lý PhonePulse',
+      version: '1.0.0',
+    },
+  },
+  apis: ['./routes/*.js'], // ✅ File chứa định nghĩa API, ví dụ route
+};
 app.use(cors());
 app.use(express.json());
 
@@ -58,6 +69,6 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/chat', chatAdminRoutes);
 app.use('/api/vouchers', voucherRoutes);
 app.use('/api/payments', paymentRoutes);
-
-// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 module.exports = app;

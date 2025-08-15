@@ -159,7 +159,7 @@ exports.delete = async (req, res) => {
 
         const deleted = await Variant.findByIdAndDelete(variantId);
 
-        if (!deleted) {
+        if (!deleted) {S
             console.warn(`[VariantController][delete] WARN: Không tìm thấy biến thể với ID ${variantId} để xoá.`);
             return res.status(404).json({ message: 'Không tìm thấy biến thể để xoá.' });
         }
