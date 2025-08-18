@@ -106,25 +106,56 @@ exports.update = async (req, res) => {
 
         if (!mongoose.Types.ObjectId.isValid(variantId)) {
             console.warn(`[VariantController][update] WARN: Variant ID không hợp lệ: ${variantId}`);
-            return res.status(400).json({ message: 'ID biến thể không hợp lệ.' });
+            return res.status(400).json({ success: false, message: 'ID biến thể không hợp lệ.' }); // Thêm success: false
         }
 
-        req.body.modified_date = new Date();
+        // Lấy các trường cụ thể được phép cập nhật từ req.body
+        // Ví dụ: chỉ cho phép cập nhật quantity và description
+        const { quantity, description, /* thêm các trường khác nếu cần */ } = req.body;
+        const updateFields = {};
+
+        // Chỉ thêm vào updateFields những trường bạn muốn cập nhật
+        if (typeof quantity === 'number' && quantity >= 0) {
+            updateFields.quantity = quantity;
+        } else if (req.body.hasOwnProperty('quantity')) {
+            // Nếu quantity được gửi nhưng không hợp lệ, bạn có thể trả lỗi
+            return res.status(400).json({ success: false, message: 'Số lượng tồn kho không hợp lệ. Phải là số và không âm.' });
+        }
+
+        if (typeof description === 'string') { // Ví dụ: cho phép cập nhật mô tả
+            updateFields.description = description;
+        }
+
+        // --- QUAN TRỌNG: KHÔNG BAO GỒM 'price' TRONG updateFields NẾU BẠN KHÔNG MUỐN NÓ BỊ THAY ĐỔI ---
+        // Nếu req.body có 'price', bạn có thể log cảnh báo hoặc bỏ qua nó
+        if (req.body.hasOwnProperty('price')) {
+            console.warn(`[VariantController][update] WARN: Cố gắng cập nhật trường 'price'. Trường này không được phép cập nhật qua API này.`);
+            // Hoặc trả về lỗi nếu bạn muốn ngăn chặn hoàn toàn:
+            // return res.status(403).json({ success: false, message: 'Không được phép cập nhật giá sản phẩm qua API này.' });
+        }
+
+        if (Object.keys(updateFields).length === 0) {
+            console.warn(`[VariantController][update] WARN: Không có trường hợp lệ nào để cập nhật cho biến thể ${variantId}.`);
+            return res.status(400).json({ success: false, message: 'Không có dữ liệu hợp lệ nào để cập nhật.' });
+        }
+
+        updateFields.modified_date = new Date(); // Cập nhật ngày sửa đổi
 
         const updated = await Variant.findByIdAndUpdate(
             variantId,
-            req.body,
+            { $set: updateFields }, // Sử dụng $set để chỉ cập nhật các trường trong updateFields
             { new: true, runValidators: true }
         );
 
         if (!updated) {
             console.warn(`[VariantController][update] WARN: Không tìm thấy biến thể với ID ${variantId} để cập nhật.`);
-            return res.status(404).json({ message: 'Không tìm thấy biến thể để cập nhật.' });
+            return res.status(404).json({ success: false, message: 'Không tìm thấy biến thể để cập nhật.' }); // Thêm success: false
         }
 
         console.log(`[VariantController][update] INFO: Biến thể đã được cập nhật thành công: ${updated._id}`);
-        res.json(updated);
+        res.json({ success: true, data: updated }); // Trả về dạng { success: true, data: {} }
     } catch (error) {
+        // ... (phần xử lý lỗi giữ nguyên, có thể thêm success: false cho các phản hồi lỗi)
         console.error(`[VariantController][update] ERROR: Lỗi khi cập nhật biến thể với ID ${req.params.variantId}. Chi tiết: ${error.message}`, error);
         if (error.name === 'ValidationError') {
             const errors = {};
@@ -133,13 +164,15 @@ exports.update = async (req, res) => {
             }
             console.error(`[VariantController][update] ERROR: Lỗi Validation:`, errors);
             return res.status(400).json({
+                success: false, // Thêm success: false
                 message: 'Dữ liệu cập nhật biến thể không hợp lệ.',
                 errors: errors,
                 stack: process.env.NODE_ENV === 'production' ? undefined : error.stack
             });
         }
-        res.status(400).json({
-            message: 'Lỗi khi cập nhật biến thể.',
+        res.status(500).json({ // Đổi 400 thành 500 cho lỗi server không xác định
+            success: false, // Thêm success: false
+            message: 'Lỗi server khi cập nhật biến thể.', // Sửa thông báo lỗi
             error: error.message,
             stack: process.env.NODE_ENV === 'production' ? undefined : error.stack
         });
