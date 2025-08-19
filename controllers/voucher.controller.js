@@ -178,6 +178,35 @@ class VoucherController {
             });
         }
     }
+
+    /**
+     * @route   GET /api/vouchers
+     * @desc    Lấy danh sách mã giảm giá hợp lệ cho người dùng cuối
+     * @access  Private
+     */
+    static async getAvailableVouchers(req, res) {
+        try {
+            const now = new Date();
+            // Tìm các voucher hợp lệ: số lượng > 0, chưa hết hạn
+            const vouchers = await Voucher.find({
+                quantity: { $gt: 0 },
+                start_date: { $lte: now },
+                end_date: { $gte: now },
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Lấy danh sách mã giảm giá thành công',
+                data: vouchers,
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Lỗi server: ' + error.message,
+            });
+        }
+    }
 }
+
 
 module.exports = VoucherController;
