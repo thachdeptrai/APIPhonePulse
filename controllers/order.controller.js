@@ -94,37 +94,46 @@ class OrderController {
   }
 
   /**
-   * @route   PUT /api/orders/:id/cancel
-   * @desc    Hủy đơn hàng của người dùng
-   * @access  Private
-   */
-  static async cancelOrder(req, res) {
-    try {
-      console.log("===== [CANCEL ORDER] =====");
-      console.log("User từ middleware:", req.user);
-      console.log("OrderId:", req.params.id);
+ * @route   PUT /api/orders/:id/cancel
+ * @desc    Hủy đơn hàng của người dùng
+ * @access  Private
+ */
+static async cancelOrder(req, res) {
+  try {
+    console.log("===== [CANCEL ORDER] =====");
+    console.log("User từ middleware:", req.user);
+    console.log("OrderId:", req.params.id);
 
-      const order = await Order.findOne({ _id: req.params.id, userId: req.user._id });
-      if (!order) {
-        console.error("❌ Không tìm thấy đơn hàng");
-        return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
-      }
+    // Tìm và update luôn trong 1 lần query
+    const order = await Order.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id, status: "pending" }, // chỉ cho phép hủy nếu là pending
+      { $set: { status: "cancelled" } },
+      { new: true } // trả về document sau khi update
+    );
 
-      if (order.status !== "pending") {
-        console.warn("⚠ Không thể hủy đơn đã xác nhận hoặc đã hủy");
-        return res.status(400).json({ success: false, message: "Không thể hủy đơn đã xác nhận hoặc đã hủy" });
-      }
-
-      order.status = "cancelled";
-      await order.save();
-
-      console.log("✅ Hủy đơn hàng thành công:", order._id);
-      res.status(200).json({ success: true, message: "Hủy đơn hàng thành công", data: order });
-    } catch (error) {
-      console.error("🔥 Lỗi khi hủy đơn:", error);
-      res.status(500).json({ success: false, message: error.message });
+    if (!order) {
+      console.warn("❌ Không thể hủy đơn (không tồn tại hoặc không ở trạng thái pending)");
+      return res.status(400).json({
+        success: false,
+        message: "Không thể hủy đơn đã xác nhận, đã hủy hoặc không tồn tại",
+      });
     }
+
+    console.log("✅ Hủy đơn hàng thành công:", order._id);
+    return res.status(200).json({
+      success: true,
+      message: "Hủy đơn hàng thành công",
+      data: order,
+    });
+  } catch (error) {
+    console.error("🔥 Lỗi khi hủy đơn:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server: " + error.message,
+    });
   }
+}
+
 
   /**
    * @route   PUT /api/admin/orders/:id/status
