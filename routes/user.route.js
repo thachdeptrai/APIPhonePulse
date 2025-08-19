@@ -50,18 +50,22 @@ router.get('/profile',authMiddleware, UserController.getProfile);
  * @access  Private
  */
 router.put('/profile', 
+    authMiddleware, // them dong nay ne
     validateMiddleware(updateProfileSchema), 
     UserController.updateProfile
 );
+
 
 /**
  * @route   PUT /api/users/change-password
  * @desc    Đổi mật khẩu
  * @access  Private
  */
-router.put('/change-password', 
-    validateMiddleware(changePasswordSchema), 
-    UserController.changePassword
+router.put(
+  '/change-password',
+  authMiddleware, // 👈 thêm middleware xác thực JWT
+  validateMiddleware(changePasswordSchema),
+  UserController.changePassword
 );
 
 /**

@@ -295,13 +295,14 @@ const validationSchemas = {
       },
       trim: true,
     },
-    gender: {
-      optional: true,
-      isIn: {
-        options: [["Nam", "Nữ", "Khác", "Không chia sẻ"]],
-        errorMessage: "Giới tính không hợp lệ",
-      },
-    },
+gender: {
+  optional: true,
+  isIn: {
+    options: ["Nam", "Nữ", "Khác", "Không chia sẻ"],
+    errorMessage: "Giới tính không hợp lệ",
+  },
+},
+
     birthday: {
       optional: true,
       isDate: {
