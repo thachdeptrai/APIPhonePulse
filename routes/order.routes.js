@@ -3,34 +3,25 @@ const router = express.Router();
 const orderController = require("../controllers/order.controller");
 const { authMiddleware, adminMiddleware } = require("../middlewares/auth.middleware");
 
-/**
- * ================================
- *           USER ROUTES
- * ================================
- */
+// ================================
+//        PUBLIC ROUTES (VNPay)
+// ================================
+// VNPay IPN (Server-to-Server)
+router.get("/vnpay_ipn", orderController.vnpayIpn);
 
-/**
- * @route   POST /api/orders
- * @desc    Tạo đơn hàng mới từ giỏ hàng hiện tại
- * @access  Private
- */
-router.post(
-  '/',
-  authMiddleware,
-  // validateMiddleware(createOrderSchema),  
-  orderController.createOrder
-);
+// VNPay Return (Redirect from user's browser)
+router.get("/vnpay_return", orderController.vnpayReturn);
 
-/**
- * @route   GET /api/orders
- * @desc    Lấy danh sách đơn hàng của người dùng hiện tại
- * @access  Private
- */
-router.get(
-  '/',
-  authMiddleware,
-  orderController.getUserOrders
-);
+// ================================
+//        USER ROUTES
+// ================================
+router.use(authMiddleware);
+
+// Create a new order
+router.post("/", orderController.createOrder);
+
+// Get a user's order history
+router.get("/", orderController.getUserOrders);
 
 /**
  * @route   PUT /api/orders/:id/cancel
@@ -43,34 +34,16 @@ router.put(
   orderController.cancelOrder
 );
 
-/**
- * ================================
- *           ADMIN ROUTES
- * ================================
- */
 
-/**
- * @route   PUT /api/admin/orders/:id/status
- * @desc    Admin cập nhật trạng thái đơn hàng (status / payment / shipping)
- * @access  Admin
- */
-router.put(
-  '/admin/orders/:id/status',
-  authMiddleware,
-  adminMiddleware,
-  orderController.updateStatus
-);
+// ================================
+//        ADMIN ROUTES
+// ================================
+router.use("/admin", authMiddleware, adminMiddleware);
 
-/**
- * @route   GET /api/admin/orders
- * @desc    Admin lấy danh sách tất cả đơn hàng
- * @access  Admin
- */
-router.get(
-  '/admin/orders',
-  authMiddleware,
-  adminMiddleware,
-  orderController.getAllOrders
-);
+// Admin get all orders (with optional status filter)
+router.get("/", orderController.getAllOrders);
+
+// Admin update order status
+router.put("/:id/status", orderController.updateStatus);
 
 module.exports = router;

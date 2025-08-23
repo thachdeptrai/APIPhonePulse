@@ -13,7 +13,6 @@ const favRoutes = require('./routes/favourite.routes');
 const reviewRoutes = require('./routes/review.routes');
 const voucherRoutes = require('./routes/voucher.routes');
 const orderRoutes = require('./routes/order.routes');  
-const paymentRoutes = require('./routes/payment.route');
 const chatRoutes = require('./routes/chat.route');
 const chatAdminRoutes = require('./routes/ChatAdmin.route'); 
 
@@ -68,7 +67,6 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/chat', chatAdminRoutes);
 app.use('/api/vouchers', voucherRoutes);
-app.use('/api/payments', paymentRoutes);
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 module.exports = app;
