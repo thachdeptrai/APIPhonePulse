@@ -6,7 +6,22 @@ const User = require("../models/User");
 
 
 class UserController {
- 
+  static async updateFcmToken(req, res) {
+    const { userId, fcm_token } = req.body;
+
+    if(!userId || !fcm_token) {
+        return res.status(400).json({ success: false, message: 'Missing userId or fcm_token' });
+    }
+
+    try {
+        const user = await User.findByIdAndUpdate(userId, { fcm_token }, { new: true });
+        if(!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        return res.json({ success: true, message: 'FCM token updated', user });
+    } catch(err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+}
    /**
    * Đăng ký user mới
    * POST /api/users/register

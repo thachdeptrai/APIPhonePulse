@@ -68,6 +68,7 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    fcm_token: { type: String }, // token FCM
 });
 
 module.exports = mongoose.model("User", userSchema);
