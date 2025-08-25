@@ -15,7 +15,8 @@ const voucherRoutes = require('./routes/voucher.routes');
 const orderRoutes = require('./routes/order.routes');  
 const paymentRoutes = require('./routes/payment.route');
 const chatRoutes = require('./routes/chat.route');
-const chatAdminRoutes = require('./routes/ChatAdmin.route'); 
+const chatAdminRoutes = require('./routes/ChatAdmin.route');
+const otpRoute = require('./routes/otpRoute'); 
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -36,6 +37,7 @@ const swaggerOptions = {
 app.use(cors());
 app.use(express.json());
 
+app.use('/api/users', otpRoute); 
 //oder 
 app.use('/api/orders', orderRoutes);
 

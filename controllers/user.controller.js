@@ -1,29 +1,75 @@
 // controllers/userController.js
 const UserService = require("../services/user.service");
 const UserUtils = require("../utils/users.util");
+const OTP = require('../models/OTP'); // ✅ thêm dòng này đầu file
+const User = require("../models/User");
+
 
 class UserController {
-  /**
+ 
+   /**
    * Đăng ký user mới
    * POST /api/users/register
    */
-  static async register(req, res) {
-    try {
-      const userData = req.body;
-      const newUser = await UserService.createUser(userData);
+    static async register(req, res) {
+  try {
+    const { name, email, password, otp } = req.body;
+    console.log("[register] Nhận yêu cầu đăng ký:", { name, email });
 
-      res.status(201).json({
-        success: true,
-        message: "Đăng ký thành công",
-        data: newUser,
-      });
-    } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
+    // Validate dữ liệu cơ bản
+    if (!name || name.trim().length < 3) {
+      return res.status(400).json({ success: false, message: "Tên không hợp lệ (ít nhất 3 ký tự)." });
     }
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ success: false, message: "Email không hợp lệ." });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, message: "Mật khẩu phải có ít nhất 6 ký tự." });
+    }
+    if (!otp || otp.length !== 6) {
+      return res.status(400).json({ success: false, message: "OTP không hợp lệ." });
+    }
+
+    // 🔑 Kiểm tra OTP
+    const otpRecord = await OTP.findOne({ email, code: otp });
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, message: "OTP không đúng." });
+    }
+    if (otpRecord.expiresAt < new Date()) {
+      return res.status(400).json({ success: false, message: "OTP đã hết hạn. Vui lòng gửi lại OTP." });
+    }
+
+    // Check email tồn tại
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: "Email đã tồn tại." });
+    }
+
+    // ✅ Tạo user
+    const newUser = await UserService.createUser({ name, email, password });
+
+    // 🧹 Xoá OTP sau khi dùng
+    await OTP.deleteMany({ email });
+
+    console.log("[register] ✅ Đăng ký thành công:", email);
+
+    return res.status(201).json({
+      success: true,
+      message: "Đăng ký thành công.",
+      data: newUser,
+    });
+
+  } catch (error) {
+    console.error("[register] Lỗi:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi đăng ký.",
+      error: error.message,
+    });
   }
+}
+
+
 
   /**
    * Đăng nhập
