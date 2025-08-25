@@ -70,7 +70,12 @@ async function sendBroadcast(title, body) {
 }
 
 async function getAllNotifications() {
-    return await Notification.find().sort({ createdAt: -1 }).lean();
+    try {
+        return await Notification.find().sort({ createdAt: -1 }).lean();
+      } catch(err) {
+        console.error('getAllNotifications error:', err);
+        throw err;
+      }
 }
 
 module.exports = { sendBroadcast, sendPersonalized ,getAllNotifications};
