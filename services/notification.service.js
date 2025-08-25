@@ -69,4 +69,8 @@ async function sendBroadcast(title, body) {
     }
 }
 
-module.exports = { sendBroadcast, sendPersonalized };
+async function getAllNotifications() {
+    return await Notification.find().sort({ createdAt: -1 }).lean();
+}
+
+module.exports = { sendBroadcast, sendPersonalized ,getAllNotifications};

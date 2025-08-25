@@ -1,5 +1,5 @@
 // controllers/notificationController.js
-const { sendBroadcast, sendPersonalized } = require('../services/notification.service');
+const { sendBroadcast, sendPersonalized,getAllNotifications  } = require('../services/notification.service');
 
 async function send(req, res) {
     const { type, userIds, title, body } = req.body;
@@ -20,5 +20,16 @@ async function send(req, res) {
         return res.json(result);
     }
 }
+// GET /api/notifications/log
+async function getNotifications(req, res) {
+    try {
+        const notifications = await getAllNotifications(); // trả về mảng các notification
+        res.json(notifications);
+    } catch(err) {
+        console.error(err);
+        res.status(500).json({ success:false, message:'Cannot load notifications' });
+    }
+}
 
-module.exports = { send };
+
+module.exports = { send ,getNotifications };
