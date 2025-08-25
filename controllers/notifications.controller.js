@@ -11,6 +11,7 @@ async function send(req, res) {
     if(type === 'broadcast') {
         if(!title || !body) return res.status(400).json({ success:false, message:'Missing title/body' });
         const result = await sendBroadcast(title, body);
+        
         return res.json(result);
     }
 
