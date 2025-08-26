@@ -1,13 +1,10 @@
 // controllers/userController.js
 const UserService = require("../services/user.service");
 const UserUtils = require("../utils/users.util");
-<<<<<<< HEAD
-const User = require("../models/User");
-=======
-const OTP = require('../models/OTP'); // ✅ thêm dòng này đầu file
-const User = require("../models/User");
 
->>>>>>> 038f7f43bf7830e90eb98eed1b0a553925228317
+const User = require("../models/User");
+const OTP = require('../models/OTP'); // ✅ thêm dòng này đầu file
+
 
 class UserController {
   static async updateFcmToken(req, res) {
