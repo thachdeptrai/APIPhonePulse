@@ -1,0 +1,10 @@
+{
+  "port": 5000,
+  "mongoURI": "mongodb://localhost:27017/PhonePulse",
+  "jwtSecret": "thachdz",
+
+  "vnp_TmnCode": "3VYU02SN",
+  "vnp_HashSecret": "KHPHSOCKNZTMC53HPJTVI3VKR8EXEB1E",
+  "vnp_Url": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+    "vnp_ReturnUrl": "https://391190e1fc48.ngrok-free.app/order/vnpay_return"
+}

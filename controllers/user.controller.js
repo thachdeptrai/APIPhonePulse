@@ -1,30 +1,94 @@
 // controllers/userController.js
 const UserService = require("../services/user.service");
 const UserUtils = require("../utils/users.util");
+<<<<<<< HEAD
+const User = require("../models/User");
+=======
+const OTP = require('../models/OTP'); // ✅ thêm dòng này đầu file
 const User = require("../models/User");
 
+>>>>>>> 038f7f43bf7830e90eb98eed1b0a553925228317
+
 class UserController {
-  /**
+  static async updateFcmToken(req, res) {
+    const { userId, fcm_token } = req.body;
+
+    if(!userId || !fcm_token) {
+        return res.status(400).json({ success: false, message: 'Missing userId or fcm_token' });
+    }
+
+    try {
+        const user = await User.findByIdAndUpdate(userId, { fcm_token }, { new: true });
+        if(!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        return res.json({ success: true, message: 'FCM token updated', user });
+    } catch(err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+}
+   /**
    * Đăng ký user mới
    * POST /api/users/register
    */
-  static async register(req, res) {
-    try {
-      const userData = req.body;
-      const newUser = await UserService.createUser(userData);
+    static async register(req, res) {
+  try {
+    const { name, email, password, otp } = req.body;
+    console.log("[register] Nhận yêu cầu đăng ký:", { name, email });
 
-      res.status(201).json({
-        success: true,
-        message: "Đăng ký thành công",
-        data: newUser,
-      });
-    } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
+    // Validate dữ liệu cơ bản
+    if (!name || name.trim().length < 3) {
+      return res.status(400).json({ success: false, message: "Tên không hợp lệ (ít nhất 3 ký tự)." });
     }
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ success: false, message: "Email không hợp lệ." });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, message: "Mật khẩu phải có ít nhất 6 ký tự." });
+    }
+    if (!otp || otp.length !== 6) {
+      return res.status(400).json({ success: false, message: "OTP không hợp lệ." });
+    }
+
+    // 🔑 Kiểm tra OTP
+    const otpRecord = await OTP.findOne({ email, code: otp });
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, message: "OTP không đúng." });
+    }
+    if (otpRecord.expiresAt < new Date()) {
+      return res.status(400).json({ success: false, message: "OTP đã hết hạn. Vui lòng gửi lại OTP." });
+    }
+
+    // Check email tồn tại
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: "Email đã tồn tại." });
+    }
+
+    // ✅ Tạo user
+    const newUser = await UserService.createUser({ name, email, password });
+
+    // 🧹 Xoá OTP sau khi dùng
+    await OTP.deleteMany({ email });
+
+    console.log("[register] ✅ Đăng ký thành công:", email);
+
+    return res.status(201).json({
+      success: true,
+      message: "Đăng ký thành công.",
+      data: newUser,
+    });
+
+  } catch (error) {
+    console.error("[register] Lỗi:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi đăng ký.",
+      error: error.message,
+    });
   }
+}
+
+
 
   /**
    * Đăng nhập

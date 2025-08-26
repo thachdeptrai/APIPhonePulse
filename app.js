@@ -15,10 +15,13 @@ const voucherRoutes = require('./routes/voucher.routes');
 const orderRoutes = require('./routes/order.routes');  
 const paymentRoutes = require('./routes/payment.route');
 const chatRoutes = require('./routes/chat.route');
-const chatAdminRoutes = require('./routes/ChatAdmin.route'); 
-
+const chatAdminRoutes = require('./routes/ChatAdmin.route');
+const otpRoute = require('./routes/otpRoute'); 
+const notificationRouter = require('./routes/notifi.route');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const admin = require('firebase-admin');
+const serviceAccount = require('./firebase-admin-key.json');
 
 const app = express();
 
@@ -35,7 +38,12 @@ const swaggerOptions = {
 };
 app.use(cors());
 app.use(express.json());
-
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+  
+app.use('/api/notifications', notificationRouter);
+app.use('/api/users', otpRoute); 
 //oder 
 app.use('/api/orders', orderRoutes);
 

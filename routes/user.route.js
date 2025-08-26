@@ -12,6 +12,9 @@ const loginSchema = validationSchemas.login;
 const updateProfileSchema = validationSchemas.updateProfile;
 const changePasswordSchema = validationSchemas.changePassword;
 
+// POST /api/users/update-fcm-token
+router.post('/update-fcm-token', UserController.updateFcmToken);
+
 // ================== PUBLIC ROUTES ==================
 /**
  * @route   POST /api/users/register
