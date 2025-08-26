@@ -1,6 +1,7 @@
 // controllers/userController.js
 const UserService = require("../services/user.service");
 const UserUtils = require("../utils/users.util");
+const User = require("../models/User");
 
 class UserController {
   /**
@@ -81,32 +82,41 @@ class UserController {
    * Cập nhật profile của user hiện tại
    * PUT /api/users/profile
    */
-  static async updateProfile(req, res) {
-    try {
-      const userId = req.user._id; // Lấy từ middleware auth
-      const updateData = req.body;
+static async updateProfile(req, res) {
+  try {
+    const userId = req.user._id;
 
-      // Không cho phép user thường cập nhật role, status, is_verified
-      if (!UserUtils.isAdmin(req.user)) {
-        delete updateData.role;
-        delete updateData.status;
-        delete updateData.is_verified;
+    // Chỉ cho phép update các field sau
+    const allowedFields = ["name", "phone", "address", "gender", "birthday"];
+    const updateData = {};
+
+    for (let field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
       }
-
-      const updatedUser = await UserService.updateUser(userId, updateData);
-
-      res.status(200).json({
-        success: true,
-        message: "Cập nhật profile thành công",
-        data: updatedUser,
-      });
-    } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
     }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy user" });
+    }
+
+    res.json({
+      success: true,
+      message: "Cập nhật thành công",
+      data: updatedUser
+    });
+  } catch (err) {
+    console.error("Lỗi updateProfile:", err);
+    res.status(500).json({ success: false, message: "Lỗi server" });
   }
+}
+
 
   /**
    * Đổi mật khẩu
