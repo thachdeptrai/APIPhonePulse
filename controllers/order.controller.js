@@ -1,4 +1,7 @@
 const Order = require("../models/Order");
+const axios = require('axios');
+const crypto = require('crypto');
+const config = require('../config');
 
 class OrderController {
 
@@ -69,6 +72,253 @@ class OrderController {
     }
   }
 
+  /**
+     * @route POST /api/orders/momo
+     * @desc Tạo đơn hàng và link thanh toán MoMo (nhưng chưa lưu vào DB)
+     * @access Private
+     */
+    // order.controller.js
+static async createMomoOrder(req, res) {
+        try {
+            console.log("===== [CREATE MOMO ORDER] =====");
+            const { items, discount_amount, final_price, shipping_address, note } = req.body;
+
+            // Validation
+            if (!items || !Array.isArray(items) || items.length === 0 || !final_price || typeof final_price !== "number" || !shipping_address || typeof shipping_address !== "string") {
+                return res.status(400).json({ success: false, message: "Dữ liệu đơn hàng không hợp lệ." });
+            }
+
+            const orderId = new Date().getTime().toString();
+            const requestId = orderId;
+            const orderInfo = `Thanh toán cho đơn hàng ${orderId}`;
+            
+            // Tạo object chứa dữ liệu extraData
+            const extraDataObject = {
+                userId: req.user._id,
+                items: items.map(item => ({
+                    productId: item.productId,
+                    variantId: item.variantId,
+                    name: item.name || "",
+                    imageUrl: item.imageUrl || "",
+                    price: item.price || 0,
+                    quantity: item.quantity || 1,
+                    variant: item.variant || ""
+                })),
+                discount_amount,
+                final_price,
+                shipping_address,
+                note
+            };
+            const extraDataString = JSON.stringify(extraDataObject);
+            const encodedExtraData = Buffer.from(extraDataString).toString('base64');
+
+            // Lấy cấu hình từ file .env
+            const { accessKey, secretKey, partnerCode, redirectUrl, ipnUrl, requestType, endpoint } = config.momo;
+
+            // Chuỗi để ký (rawSignature) - Đảm bảo thứ tự tham số khớp với MoMo
+            const rawSignature = `accessKey=${accessKey}&amount=${final_price}&extraData=${encodedExtraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
+            
+            const signature = crypto.createHmac('sha256', secretKey).update(rawSignature).digest('hex');
+
+            const requestBody = {
+                partnerCode,
+                partnerName: 'Your Store Name',
+                storeId: 'YourStoreId',
+                requestId,
+                amount: final_price,
+                orderId,
+                orderInfo,
+                redirectUrl,
+                ipnUrl,
+                lang: 'vi',
+                requestType,
+                autoCapture: false,
+                extraData: encodedExtraData,
+                signature,
+            };
+
+            const momoResponse = await axios.post(endpoint, requestBody);
+
+            console.log("✅ Lấy link thanh toán MoMo thành công:", momoResponse.data.payUrl);
+            
+            res.status(200).json({
+                success: true,
+                message: "Tạo link thanh toán MoMo thành công",
+                data: {
+                    momoPayUrl: momoResponse.data.payUrl,
+                    qrCodeUrl: momoResponse.data.qrCodeUrl,
+                },
+            });
+
+        } catch (error) {
+            console.error("🔥 Lỗi khi tạo đơn hàng MoMo:", error);
+            if (error.response) {
+                console.error("Momo Response Data:", error.response.data);
+                return res.status(error.response.status).json({
+                    success: false,
+                    message: "Lỗi từ MoMo: " + (error.response.data.message || "Không xác định"),
+                    error_details: error.response.data
+                });
+            } else {
+                return res.status(500).json({ success: false, message: error.message || "Đã xảy ra lỗi khi tạo đơn hàng MoMo" });
+            }
+        }
+    
+}
+    /**
+     * @route POST /api/orders/momo/ipn
+     * @desc Xử lý IPN từ MoMo để tạo đơn hàng chính thức
+     * @access Public (MoMo access)
+     */
+    static async handleMomoIPN(req, res) {
+        try {
+            console.log("===== [MOMO IPN CALLBACK] =====");
+            const { partnerCode, orderId, amount, requestId, extraData, signature, resultCode, message } = req.body;
+            console.log("Dữ liệu nhận được:", req.body);
+
+            // Verify signature
+            const { accessKey, secretKey } = config.momo;
+            
+            // SỬA LỖI Ở DÒNG NÀY: Dùng accessKey để xác thực chứ không phải secretKey
+            const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&message=${message}&orderId=${orderId}&partnerCode=${partnerCode}&requestId=${requestId}&resultCode=${resultCode}&responseTime=${req.body.responseTime}&transId=${req.body.transId}`;
+            
+            const expectedSignature = crypto.createHmac('sha256', secretKey).update(rawSignature).digest('hex');
+
+            if (expectedSignature !== signature) {
+                console.error("❌ Lỗi: Chữ ký không hợp lệ");
+                return res.status(400).json({ success: false, message: "Invalid signature" });
+            }
+
+            // Giải mã extraData để lấy thông tin đơn hàng
+            const decodedExtraData = Buffer.from(extraData, 'base64').toString('utf-8');
+            const orderInfo = JSON.parse(decodedExtraData);
+
+            if (resultCode === 0) {
+                // Thanh toán thành công -> Tạo đơn hàng mới trong database
+                const existingOrder = await Order.findOne({ 'meta.momoTransactionId': orderId });
+                if (existingOrder) {
+                    console.log(`⚠️ Đơn hàng ${orderId} đã tồn tại. Bỏ qua việc tạo lại.`);
+                    return res.status(204).send();
+                }
+
+                const order = await Order.create({
+                    userId: orderInfo.userId,
+                    items: orderInfo.items,
+                    discount_amount: orderInfo.discount_amount,
+                    final_price: orderInfo.final_price,
+                    shipping_address: orderInfo.shipping_address,
+                    payment_method: "MoMo",
+                    note: orderInfo.note,
+                    status: "confirmed",
+                    payment_status: "paid",
+                    created_date: new Date(),
+                    meta: {
+                        momoTransactionId: orderId,
+                        momoResponse: req.body
+                    }
+                });
+
+                console.log(`✅ Đơn hàng ${order._id} đã được tạo thành công.`);
+            } else {
+                // Thanh toán thất bại -> Chỉ log lại, không tạo đơn hàng
+                console.log(`⚠️ Thanh toán cho giao dịch ${orderId} thất bại. Mã lỗi: ${resultCode}`);
+            }
+
+            return res.status(204).send();
+
+        } catch (error) {
+            console.error("🔥 Lỗi khi xử lý IPN:", error);
+            res.status(500).json({ success: false, message: "Lỗi server: " + error.message });
+        }
+    }
+
+  /**
+   * @route GET /api/orders/momo/return
+   * @desc Xử lý sau khi người dùng thanh toán trên MoMo
+   * @access Public
+   */
+   
+    static async handleMomoReturn(req, res) {
+  console.log("===== [MOMO RETURN URL] =====");
+
+  const { resultCode, orderId, message, extraData } = req.query;
+  console.log(`Nhận phản hồi từ MoMo: orderId=${orderId}, resultCode=${resultCode}, message=${message}`);
+
+  try {
+    if (resultCode == 0) {
+      // Tìm đơn hàng theo transactionId
+      let order = await Order.findOne({ 'meta.momoTransactionId': orderId });
+
+      if (!order) {
+        // 🔑 Nếu IPN chưa xử lý, thì mình tạo luôn ở đây
+        console.warn(`⚠️ Đơn hàng ${orderId} chưa có trong DB, tiến hành tạo mới từ Return URL.`);
+
+        // Giải mã extraData
+        let decodedExtraData = null;
+        try {
+          decodedExtraData = Buffer.from(extraData, "base64").toString("utf-8");
+          decodedExtraData = JSON.parse(decodedExtraData);
+        } catch (err) {
+          console.error("❌ Lỗi khi decode extraData:", err);
+        }
+
+        if (!decodedExtraData) {
+          return res.status(400).json({
+            success: false,
+            message: "Không thể giải mã dữ liệu extraData để tạo đơn hàng.",
+          });
+        }
+
+        // Tạo đơn hàng mới
+        order = await Order.create({
+          userId: decodedExtraData.userId,
+          items: decodedExtraData.items,
+          discount_amount: decodedExtraData.discount_amount,
+          final_price: decodedExtraData.final_price,
+          shipping_address: decodedExtraData.shipping_address,
+          payment_method: "MoMo",
+          note: decodedExtraData.note,
+          status: "confirmed",
+          payment_status: "paid",
+          created_date: new Date(),
+          meta: {
+            momoTransactionId: orderId,
+            momoResponse: req.query, // log luôn query từ MoMo
+          },
+        });
+
+        console.log(`✅ Đã tạo đơn hàng mới từ Return URL: ${order._id}`);
+      } else {
+        console.log(`✅ Đã tìm thấy đơn hàng trong DB: ${order._id}`);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Thanh toán thành công. Đơn hàng của bạn đã được xác nhận.",
+        data: order,
+      });
+    } else {
+      // Trường hợp thanh toán thất bại
+      console.log(`❌ Thanh toán thất bại cho giao dịch ${orderId}. Mã lỗi: ${resultCode}`);
+      return res.status(200).json({
+        success: false,
+        message: `Thanh toán thất bại. Mã lỗi: ${resultCode}`,
+        orderId,
+      });
+    }
+  } catch (error) {
+    console.error("🔥 Lỗi khi xử lý Return:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi xử lý kết quả thanh toán.",
+      orderId,
+    });
+  }
+
+
+
+  
+}
   /**
    * @route   GET /api/orders
    * @desc    Lấy lịch sử đơn hàng của người dùng hiện tại
