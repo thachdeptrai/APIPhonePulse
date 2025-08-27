@@ -11,11 +11,7 @@ const chatHandler = (io, socket) => {
         { roomId },
         { status: 'closed', updatedAt: new Date() }
       );
-  
-      // 2. Xóa toàn bộ tin nhắn thuộc roomId
-      await Message.deleteMany({ roomId });
-  
-      // 3. Gửi thông báo tới tất cả clients trong room
+      // 2. Gửi thông báo tới tất cả clients trong room
       io.to(roomId).emit('room_closed', {
         closedBy,
         timestamp: new Date()
