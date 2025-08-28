@@ -23,5 +23,5 @@ const config = {
     endpoint: process.env.MOMO_ENDPOINT
   }
 };
-
-module.exports = config;
+   
+module.exports = config; 
