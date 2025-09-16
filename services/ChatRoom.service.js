@@ -17,7 +17,7 @@ const chatHandler = (io, socket) => {
         timestamp: new Date()
       });
   
-      console.log(`✅ Đã đóng và xoá tất cả tin nhắn trong phòng ${roomId}`);
+      console.log(`✅ Đã đóng phòng ${roomId}`);
     } catch (error) {
       console.error('❌ Lỗi khi đóng phòng:', error);
       socket.emit('error', { message: 'Không thể đóng phòng' });

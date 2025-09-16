@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Variant = require('./Variant');
 
 /**
  * Mô tả schema cho item trong đơn hàng
@@ -130,6 +131,12 @@ const orderSchema = new mongoose.Schema(
                 type: Object,
                 description: 'Lưu trữ toàn bộ phản hồi từ MoMo IPN',
             }
+        },
+        // Cờ đảm bảo chỉ cộng số lượng bán một lần khi đủ điều kiện
+        sales_applied: {
+            type: Boolean,
+            default: false,
+            description: 'Đã áp dụng cộng số bán và trừ tồn kho hay chưa'
         }
     },
     {
@@ -139,5 +146,30 @@ const orderSchema = new mongoose.Schema(
         },
     }
 );
+
+// Áp dụng cộng số bán và trừ tồn kho một lần khi đủ điều kiện
+orderSchema.statics.applySalesIfEligible = async function applySalesIfEligible(orderId) {
+    const OrderModel = this;
+    const order = await OrderModel.findById(orderId);
+    if (!order) return null;
+    if (order.sales_applied) return order;
+
+    // Chỉ áp dụng khi đơn đã xác nhận và đã thanh toán
+    if (order.status !== 'confirmed' || order.payment_status !== 'paid') {
+        return order;
+    }
+
+    for (const item of order.items) {
+        await Variant.findByIdAndUpdate(
+            item.variantId,
+            { $inc: { sold_count: item.quantity, quantity: -item.quantity } },
+            { new: true }
+        );
+    }
+
+    order.sales_applied = true;
+    await order.save();
+    return order;
+};
 
 module.exports = mongoose.model('Order', orderSchema);

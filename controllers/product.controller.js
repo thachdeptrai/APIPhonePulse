@@ -13,50 +13,50 @@ class ProductController {
      * @access Public
      */
     static async getAll(req, res) {
-        try {
-            // Lấy tất cả sản phẩm và populate category_id
-            const products = await Product.find({})
-                .populate({
-                    path: 'category_id',
-                    model: 'Category',
-                    select: 'name' // Chỉ chọn trường 'name' của Category
-                })
-                .lean(); // Sử dụng .lean() để có thể chỉnh sửa đối tượng
+    try {
+        // Lấy tất cả sản phẩm và populate category_id
+        const products = await Product.find({})
+            .populate({
+                path: 'category_id',
+                model: 'Category',
+                select: 'name'
+            })
+            .lean();
 
-            const result = await Promise.all(
-                products.map(async (product) => {
-                    // Lấy ảnh chính của sản phẩm
-                    const primaryImage = await ProductImage.findOne({ product_id: product._id }).lean();
+        const result = await Promise.all(
+            products.map(async (product) => {
+                // Lấy ảnh đại diện
+                const primaryImage = await ProductImage.findOne({ product_id: product._id }).lean();
 
-                    // Lấy tất cả biến thể của sản phẩm và populate color_id, size_id
-                    const variants = await Variant.find({ product_id: product._id })
-                        .populate({
-                            path: 'color_id',
-                            model: 'Color',
-                            select: 'color_name'
-                        })
-                        .populate({
-                            path: 'size_id',
-                            model: 'Size',
-                            select: 'size_name storage ram'
-                        })
-                        .lean(); // Quan trọng: .lean() cho variants để đảm bảo chúng là plain objects
+                // Lấy **1 variant đại diện** (ví dụ: variant đầu tiên)
+                const representativeVariant = await Variant.findOne({ product_id: product._id })
+                    .populate({
+                        path: 'color_id',
+                        model: 'Color',
+                        select: 'color_name'
+                    })
+                    .populate({
+                        path: 'size_id',
+                        model: 'Size',
+                        select: 'size_name storage ram'
+                    })
+                    .lean();
 
-                    // Trả về đối tượng sản phẩm đã được làm phẳng
-                    return {
-                        ...product, // product đã là plain object nhờ .lean() ở trên
-                        productImage: primaryImage || null, // Gán đối tượng ProductImage
-                        variants: variants // Gán mảng variants đã là plain objects
-                        // category_id sẽ tự động được đưa vào từ product
-                    };
-                })
-            );
-            res.json(result);
-        } catch (err) {
-            console.error("Error in getAll products:", err);
-            res.status(500).json({ error: err.message || "Lỗi server khi lấy danh sách sản phẩm." });
-        }
+                return {
+                    ...product,
+                    productImage: primaryImage || null,
+                    variant: representativeVariant || null, // ✅ chỉ lấy 1 variant để hiển thị
+                };
+            })
+        );
+
+        res.json(result);
+    } catch (err) {
+        console.error("Error in getAll products:", err);
+        res.status(500).json({ error: err.message || "Lỗi server khi lấy danh sách sản phẩm." });
     }
+}
+
 
     /**
      * @route GET /api/products/:id
@@ -190,6 +190,39 @@ class ProductController {
             res.status(500).json({ error: err.message || "Lỗi server khi tìm kiếm sản phẩm." });
         }
     }
+    // ✅ Chỉ lấy sản phẩm + ảnh đại diện + category (không lấy variants)
+static async getAllForGrid(req, res) {
+    try {
+        const products = await Product.find({})
+            .populate({
+                path: 'category_id',
+                model: 'Category',
+                select: 'name'
+            })
+            .lean();
+
+        const result = await Promise.all(
+            products.map(async (product) => {
+                const primaryImage = await ProductImage.findOne({ product_id: product._id }).lean();
+
+                return {
+                    _id: product._id,
+                    product_name: product.product_name,
+                    description: product.description,
+                    category: product.category_id ? product.category_id.name : null,
+                    productImage: primaryImage || null,
+                    // ❌ Không trả về variants ở đây
+                };
+            })
+        );
+
+        res.json(result);
+    } catch (err) {
+        console.error("Error in getAllForGrid:", err);
+        res.status(500).json({ error: "Lỗi server khi lấy danh sách sản phẩm." });
+    }
+}
+
 
     // Tạo sản phẩm mới
     static async add(req, res) {

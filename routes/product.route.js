@@ -4,8 +4,12 @@ const productController = require('../controllers/product.controller');
 
 // Tìm kiếm sản phẩm
 router.get('/search', productController.getName);
-// Lấy tất cả sản phẩm
+
+// Lấy tất cả sản phẩm (danh sách chính)
 router.get('/', productController.getAll);
+
+// Lấy sản phẩm dạng grid (trước :id để tránh conflict)
+router.get('/grid', productController.getAllForGrid);
 
 // Lấy sản phẩm theo ID
 router.get('/:id', productController.getById);
