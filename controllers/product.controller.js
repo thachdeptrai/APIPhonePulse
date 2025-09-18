@@ -224,43 +224,69 @@ static async getAllForGrid(req, res) {
 }
 
 
-    // Tạo sản phẩm mới
-    static async add(req, res) {
-        try {
-            const newProduct = new Product(req.body);
-            const saved = await newProduct.save();
-            res.status(201).json(saved);
-        } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).json({ message: "Dữ liệu sản phẩm không hợp lệ.", errors: err.errors });
-            }
-            console.error("Error in add product:", err);
-            res.status(400).json({ error: err.message || "Lỗi khi tạo sản phẩm." });
-        }
-    }
-
-    // Cập nhật sản phẩm
-    static async update(req, res) {
-        try {
-            req.body.modified_date = new Date();
-
-            const updated = await Product.findByIdAndUpdate(req.params.id, req.body, {
-                new: true,
-                runValidators: true
+// Tạo sản phẩm mới
+static async add(req, res) {
+    try {
+        // ✅ Kiểm tra giá có phải bội số 1000 không
+        if (req.body.price % 1000 !== 0) {
+            return res.status(400).json({
+                message: "Giá sản phẩm phải là bội số của 1000 (ví dụ: 288000)."
             });
-
-            if (!updated) {
-                return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
-            }
-            res.json(updated);
-        } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).json({ message: "Dữ liệu cập nhật sản phẩm không hợp lệ.", errors: err.errors });
-            }
-            console.error("Error in update product:", err);
-            res.status(400).json({ error: err.message || "Lỗi khi cập nhật sản phẩm." });
         }
+
+        const newProduct = new Product(req.body);
+        const saved = await newProduct.save();
+        res.status(201).json(saved);
+    } catch (err) {
+        if (err.name === 'ValidationError') {
+            return res.status(400).json({
+                message: "Dữ liệu sản phẩm không hợp lệ.",
+                errors: err.errors
+            });
+        }
+        console.error("Error in add product:", err);
+        res.status(400).json({
+            error: err.message || "Lỗi khi tạo sản phẩm."
+        });
     }
+}
+
+// Cập nhật sản phẩm
+static async update(req, res) {
+    try {
+        req.body.modified_date = new Date();
+
+        // ✅ Kiểm tra giá có phải bội số 1000 không
+        if (req.body.price && req.body.price % 1000 !== 0) {
+            return res.status(400).json({
+                message: "Giá sản phẩm phải là bội số của 1000 (ví dụ: 288000)."
+            });
+        }
+
+        const updated = await Product.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        });
+
+        if (!updated) {
+            return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+        }
+        res.json(updated);
+    } catch (err) {
+        if (err.name === 'ValidationError') {
+            return res.status(400).json({
+                message: "Dữ liệu cập nhật sản phẩm không hợp lệ.",
+                errors: err.errors
+            });
+        }
+        console.error("Error in update product:", err);
+        res.status(400).json({
+            error: err.message || "Lỗi khi cập nhật sản phẩm."
+        });
+    }
+
+
+}
 
     // Xoá sản phẩm
     static async delete(req, res) {

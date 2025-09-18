@@ -24,15 +24,17 @@ class UserController {
     }
 }
    /**
-   * Đăng ký user mới
-   * POST /api/users/register
-   */
-    static async register(req, res) {
+ * Đăng ký user mới
+ * POST /api/users/register
+ */
+static async register(req, res) {
   try {
-    const { name, email, password, otp } = req.body;
-    console.log("[register] Nhận yêu cầu đăng ký:", { name, email });
+    const data = req.body; 
+    console.log("[register] Nhận yêu cầu đăng ký:", data);
 
-    // Validate dữ liệu cơ bản
+    const { name, email, password, otp } = data;
+
+    // Validate bắt buộc
     if (!name || name.trim().length < 3) {
       return res.status(400).json({ success: false, message: "Tên không hợp lệ (ít nhất 3 ký tự)." });
     }
@@ -61,8 +63,8 @@ class UserController {
       return res.status(400).json({ success: false, message: "Email đã tồn tại." });
     }
 
-    // ✅ Tạo user
-    const newUser = await UserService.createUser({ name, email, password });
+    // ✅ Tạo user: truyền toàn bộ dữ liệu (không set cứng)
+    const newUser = await UserService.createUser(data);
 
     // 🧹 Xoá OTP sau khi dùng
     await OTP.deleteMany({ email });
@@ -84,6 +86,7 @@ class UserController {
     });
   }
 }
+
 
 
 

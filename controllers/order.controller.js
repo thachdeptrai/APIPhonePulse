@@ -168,9 +168,7 @@ static async createMomoOrder(req, res) {
         return res.status(500).json({ success: false, message: error.message });
       }
     }
-  
 
-    
 }
     /**
      * @route POST /api/orders/momo/ipn
@@ -293,7 +291,7 @@ static async handleMomoReturn(req, res) {
           shipping_address: decodedExtraData.shipping_address,
           payment_method: "MoMo",
           note: decodedExtraData.note,
-          status: "confirmed",
+          status: "pending",
           payment_status: "paid",
           created_date: new Date(),
           meta: {
@@ -340,14 +338,11 @@ static async handleMomoReturn(req, res) {
   static async getUserOrders(req, res) {
     try {
       console.log("===== [GET USER ORDERS] =====");
-      console.log("User từ middleware:", req.user);
 
       const orders = await Order.find({ userId: req.user._id })
         .sort({ created_date: -1 })
         .lean();
 
-      console.log(`✅ Lấy được ${orders.length} đơn hàng cho user ${req.user._id}`);
-      orders.forEach((o, i) => console.log(`📌 Đơn hàng [${i}] - ID: ${o._id}, items:`, o.items));
 
       res.status(200).json({ success: true, data: orders });
     } catch (error) {

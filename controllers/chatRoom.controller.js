@@ -1,5 +1,6 @@
 const ChatRoom = require('../models/ChatRoom');
 const Message = require('../models/Message');
+const axios = require('axios');
 
 exports.createOrGetRoom = async (req, res) => {
   const { userId } = req.body;
@@ -49,4 +50,33 @@ exports.sendMessage = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+// Chat AI tư vấn
 
+exports.askAI = async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ message: 'Thiếu nội dung câu hỏi' });
+
+    // Gọi OpenAI API (hoặc dịch vụ AI khác)
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-3.5-turbo', // hoặc gpt-4 nếu có
+        messages: [{ role: 'user', content: message }],
+        max_tokens: 500,
+        temperature: 0.7,
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const aiReply = response.data.choices[0].message.content;
+    res.json({ reply: aiReply });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

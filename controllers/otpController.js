@@ -59,6 +59,7 @@ exports.sendOtpToEmail = async (req, res) => {
       return res.status(200).json({
         success: true,
         message: 'OTP đã được gửi tới email của bạn.',
+         otp: code 
       });
     });
 
