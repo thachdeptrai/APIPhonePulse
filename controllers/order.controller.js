@@ -143,10 +143,11 @@ static async createMomoOrder(req, res) {
         signature,
       };
 
-      console.log("[MOMO][REQUEST] endpoint:", endpoint);
-      console.log("[MOMO][REQUEST BODY]", { ...requestBody, signature: '[hidden]' });
+      // console.log("[MOMO][REQUEST] endpoint:", endpoint);
+
+      // console.log("[MOMO][REQUEST BODY]", { ...requestBody, signature: '[hidden]' });
       const momoResponse = await axios.post(endpoint, requestBody);
-      console.log("[MOMO][RESPONSE]", momoResponse && momoResponse.data);
+      // console.log("[MOMO][RESPONSE]", momoResponse && momoResponse.data);
 
       res.status(200).json({
         success: true,
@@ -214,7 +215,7 @@ static async handleMomoIPN(req, res) {
 
     // Chỉ xử lý khi thanh toán thành công
     if (Number(resultCode) === 0 || Number(resultCode) === 9000) {
-      console.log("[MOMO][IPN] resultCode success branch");
+      console.log("[MOMO][IPN] thanh toán thành công");
       // Kiểm tra đơn hàng đã tồn tại chưa
       let order = await Order.findOne({ "meta.momoTransactionId": orderId });
       console.log("[MOMO][IPN] existing order?", Boolean(order));
@@ -360,32 +361,26 @@ static async handleMomoReturn(req, res) {
  *  [HỦY ĐƠN HÀNG - Cả Online & COD]
  *  ================================ */
 // USER CANCEL ORDER
+// USER CANCEL ORDER
 static async cancelOrder(req, res) {
   try {
     const order = await Order.findOne({ _id: req.params.id, userId: req.user._id });
-    if (!order) return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+    }
 
     if (order.status === "cancelled") {
       return res.status(400).json({ success: false, message: "Đơn hàng đã bị hủy trước đó" });
     }
 
-    let needRollback = false;
-
-    if (order.payment_method === "COD" && order.status === "delivered") {
-      // COD mà đã giao rồi thì rollback
-      needRollback = true;
-    }
-    if (order.payment_method !== "COD" && order.payment_status === "paid") {
-      // Online đã thanh toán thì rollback
-      needRollback = true;
-    }
-
-    if (needRollback) {
-      for (const item of order.items) {
-        await Variant.findByIdAndUpdate(item.variantId, {
-          $inc: { sold_count: -item.quantity, quantity: item.quantity },
-        });
-      }
+    // ✅ Khi hủy đơn hàng => rollback tồn kho & sold_count
+    for (const item of order.items) {
+      await Variant.findByIdAndUpdate(item.variantId, {
+        $inc: {
+          sold_count: -item.quantity,  // trừ số đã bán đi
+          quantity: item.quantity      // cộng lại vào tồn kho
+        },
+      });
     }
 
     order.status = "cancelled";
@@ -393,9 +388,11 @@ static async cancelOrder(req, res) {
 
     return res.status(200).json({ success: true, message: "Hủy đơn hàng thành công", data: order });
   } catch (error) {
+    console.error("🔥 Lỗi khi hủy đơn hàng:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 }
+
 
 
 // ADMIN UPDATE STATUS
